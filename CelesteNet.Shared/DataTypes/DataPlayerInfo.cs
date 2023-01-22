@@ -21,6 +21,7 @@ namespace Celeste.Mod.CelesteNet.DataTypes {
         public string Name = "";
         public string FullName = "";
         public string DisplayName = "";
+        public string NameColor = "";
 
         public override MetaType[] GenerateMeta(DataContext ctx)
             => new MetaType[] {
@@ -35,12 +36,14 @@ namespace Celeste.Mod.CelesteNet.DataTypes {
             Name = reader.ReadNetString();
             FullName = reader.ReadNetString();
             DisplayName = reader.ReadNetString();
+            NameColor = reader.ReadNetString();
         }
 
         protected override void Write(CelesteNetBinaryWriter writer) {
             writer.WriteNetString(Name);
             writer.WriteNetString(FullName);
             writer.WriteNetString(DisplayName);
+            writer.WriteNetString(NameColor);
         }
 
         public override string ToString()

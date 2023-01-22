@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Celeste.Mod.CelesteNet.DataTypes;
+using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.CelesteNet.Client.Entities {
     public class GhostNameTag : Entity {
@@ -12,14 +14,16 @@ namespace Celeste.Mod.CelesteNet.Client.Entities {
         public Entity Tracking;
         public string Name;
 
+        private DataPlayerInfo playerInfo;
         protected Camera Camera;
 
         public float Alpha = 1f;
 
-        public GhostNameTag(Entity tracking, string name)
+        public GhostNameTag(Entity tracking, string name, DataPlayerInfo info)
             : base(Vector2.Zero) {
             Tracking = tracking;
             Name = name;
+            playerInfo = info;
 
             Tag = TagsExt.SubHUD | Tags.Persistent | Tags.PauseUpdate | Tags.TransitionUpdate;
         }
@@ -56,12 +60,13 @@ namespace Celeste.Mod.CelesteNet.Client.Entities {
                 1920f - size.X * 0.25f - 32f, 1080f - 32f
             );
 
+
             CelesteNetClientFont.DrawOutline(
                 Name,
                 pos,
                 new(0.5f, 1f),
                 Vector2.One * 0.5f * scale,
-                Color.White * a,
+                Calc.HexToColor(playerInfo.NameColor) * a,
                 2f,
                 Color.Black * (a * a * a)
             );

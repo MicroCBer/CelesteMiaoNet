@@ -52,7 +52,7 @@ namespace Celeste.Mod.CelesteNet.Server.Utils {
 
             return retString;
         }
-        public static FileStream GetImage(string url) {
+        public static string GetImage(string url) {
             WebRequest webRequest = WebRequest.Create(url);
             WebResponse webResponse = webRequest.GetResponse();
             Stream myStream = webResponse.GetResponseStream();
@@ -60,12 +60,9 @@ namespace Celeste.Mod.CelesteNet.Server.Utils {
             if (!Directory.Exists("temp")) {
                 Directory.CreateDirectory("temp");
             }
-            string filename = "temp/" + new Guid().ToString("N") + ".png";
+            string filename = "temp/" + Guid.NewGuid().ToString("N") + ".png";
             resizeImage(img, new Size(64, 64)).Save(filename, System.Drawing.Imaging.ImageFormat.Png);
-            using (FileStream stream = File.OpenRead(filename)) {
-                webResponse.Close();
-                return stream;
-            }
+            return filename;
         }
 
         private static System.Drawing.Image resizeImage(System.Drawing.Image imgToResize, Size size) {

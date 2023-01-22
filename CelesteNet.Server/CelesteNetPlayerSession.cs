@@ -2,6 +2,7 @@
 using Celeste.Mod.CelesteNet.Server.Utils;
 using Mono.Options;
 using MonoMod.Utils;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -12,6 +13,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Monocle;
 
 namespace Celeste.Mod.CelesteNet.Server {
     public class CelesteNetPlayerSession : IDisposable {
@@ -122,11 +124,29 @@ namespace Celeste.Mod.CelesteNet.Server {
                     fullName = $"{Name}#{i}";
                 }
             }
+            long bindqq = 0;
+            string color = "#fffff";
+            try {
+                Dictionary<string, string> request = new Dictionary<string, string>();
+                request.Add("username",Name);
+                dynamic result = JsonConvert.DeserializeObject(HttpUtils.Post(Server.Settings.ServerAuthApi+ "/getUserByName", JsonConvert.SerializeObject(request)));
+                if(result.code == "200") {
+                    bindqq = (long) result.data.bind_number;
+                    color = (string) result.data.color;
+                    if (!string.IsNullOrEmpty((string) result.data.prefix)) {
+                        fullNameSpace = $"[{result.data.prefix}]{result.data.username}";
+                    } else {
+                        fullNameSpace = result.data.username;
+                    }
+                }
+            } catch(Exception e) {
 
+            }
             // Handle avatars
             string displayName = fullNameSpace;
 
-            using (Stream? avatarStream = HttpUtils.GetImage("https://q1.qlogo.cn/g?b=qq&nk=1773805744&s=640")) {
+            string img = HttpUtils.GetImage($"https://q1.qlogo.cn/g?b=qq&nk={bindqq}&s=640");
+            using (Stream? avatarStream = File.OpenRead(img)) {
                 if (avatarStream != null) {
                     string avatarId = $"celestenet_avatar_{SessionID}_";
                     displayName = $":{avatarId}: {fullNameSpace}";
@@ -153,13 +173,19 @@ namespace Celeste.Mod.CelesteNet.Server {
                 } else
                     AvatarFragments = Dummy<DataInternalBlob>.EmptyArray;
             }
+            try {
+                File.Delete(img);
+            }catch(Exception e) {
 
+            }
+            Logger.Log(LogLevel.INF,"COLOR", color);
             // Create the player's PlayerInfo
             DataPlayerInfo playerInfo = new() {
                 ID = SessionID,
                 Name = Name,
                 FullName = fullName,
-                DisplayName = displayName
+                DisplayName = displayName,
+                NameColor = color
             };
             playerInfo.Meta = playerInfo.GenerateMeta(Server.Data);
             Server.Data.SetRef(playerInfo);
