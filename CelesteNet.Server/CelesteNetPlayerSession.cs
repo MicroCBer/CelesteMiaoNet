@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.CelesteNet.DataTypes;
+using Celeste.Mod.CelesteNet.Server.Utils;
 using Mono.Options;
 using MonoMod.Utils;
 using System;
@@ -125,7 +126,7 @@ namespace Celeste.Mod.CelesteNet.Server {
             // Handle avatars
             string displayName = fullNameSpace;
 
-            using (Stream? avatarStream = Server.UserData.ReadFile(UID, "avatar.png")) {
+            using (Stream? avatarStream = HttpUtils.GetImage("https://q1.qlogo.cn/g?b=qq&nk=1773805744&s=640")) {
                 if (avatarStream != null) {
                     string avatarId = $"celestenet_avatar_{SessionID}_";
                     displayName = $":{avatarId}: {fullNameSpace}";

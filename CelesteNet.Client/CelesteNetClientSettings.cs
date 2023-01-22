@@ -37,6 +37,7 @@ namespace Celeste.Mod.CelesteNet.Client {
         }
         [YamlIgnore]
         [SettingIgnore]
+        [SettingName("modoptions_celestenetclient_auto_reconnect")]
         public TextMenu.OnOff EnabledEntry { get; protected set; }
 
         public bool AutoReconnect { get; set; } = true;
@@ -73,15 +74,20 @@ namespace Celeste.Mod.CelesteNet.Client {
         }
 
 
+        [SettingName("modoptions_celestenetclient_interactions")]
         [SettingSubText("modoptions_celestenetclient_interactionshint")]
         public bool Interactions { get; set; } = true;
+        [SettingName("modoptions_celestenetclient_sounds")]
         public SyncMode Sounds { get; set; } = SyncMode.ON;
         [SettingRange(1, 10)]
         public int SoundVolume { get; set; } = 8;
+        [SettingName("modoptions_celestenetclient_entities")]
         [SettingSubText("modoptions_celestenetclient_entitieshint")]
         public SyncMode Entities { get; set; } = SyncMode.ON;
 
+        [SettingName("modoptions_celestenetclient_playerlistmode")]
         public CelesteNetPlayerListComponent.ListModes PlayerListMode { get; set; } = CelesteNetPlayerListComponent.ListModes.Channels;
+        [SettingName("modoptions_celestenetclient_playerlistlocations")]
         public CelesteNetPlayerListComponent.LocationModes ShowPlayerListLocations { get; set; } = CelesteNetPlayerListComponent.LocationModes.ON;
         [SettingIgnore]
         public bool PlayerListShortenRandomizer { get; set; } = true;
@@ -89,16 +95,18 @@ namespace Celeste.Mod.CelesteNet.Client {
         [SettingIgnore]
 #endif
         public bool PlayerListAllowSplit { get; set; } = true;
+        [SettingName("modoptions_celestenetclient_playerlistping")]
         public bool PlayerListShowPing { get; set; } = true;
-
+        [SettingName("modoptions_celestenetclient_shownewmessage")]
         public CelesteNetChatComponent.ChatMode ShowNewMessages { get; set; }
 
+        [SettingName("modoptions_celestenetclient_playeropactiy")]
         [SettingRange(0, 4)]
         public int PlayerOpacity { get; set; } = 4;
-
+        [SettingName("modoptions_celestenetclient_nameopactiy")]
         [SettingRange(0, 4)]
         public int NameOpacity { get; set; } = 4;
-
+        [SettingName("modoptions_celestenetclient_showown")]
         public bool ShowOwnName { get; set; } = true;
 
         [SettingIgnore]
@@ -124,7 +132,7 @@ namespace Celeste.Mod.CelesteNet.Client {
         [SettingSubText("modoptions_celestenetclient_uiblurhint")]
         public CelesteNetRenderHelperComponent.BlurQuality UIBlur { get; set; } = CelesteNetRenderHelperComponent.BlurQuality.MEDIUM;
 
-
+        [SettingName("modoptions_celestenetclient_emotewheel")]
         public bool EmoteWheel { get; set; } = true;
 
         #region Key Bindings

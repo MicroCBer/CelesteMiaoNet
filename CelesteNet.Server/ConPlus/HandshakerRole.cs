@@ -376,6 +376,7 @@ Who wants some tea?"
                         return null;
                     }
                 } catch (Exception ex) {
+                    Logger.Log(LogLevel.WRN,"AuthService","Request Auth Login Failed.");
                     return "Auth Server is shutdown";
                 }
             }

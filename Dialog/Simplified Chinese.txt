@@ -1,0 +1,52 @@
+﻿# NOTES:
+# The # Symbol at the start of a line counts as a Comment. To include in dialog, use a \#
+# The . Symbol will cause a pause unless escaped with \. (ex: Mr. Oshiro has a pause, Mr\. Oshiro does not)
+# Newlines automatically create a Page Break, unless there is an {n} command on the previous line
+# Commands: Anything inside of curly braces {...} is a command and should not be translated.
+
+# Inline Text Commands:
+# {~}wavy text{/~}
+# {!}impact text{/!}
+# {>> x}changes speed at which characters are displayed{>>}
+# {# 000000}this text is black{#} (uses HEX color values)
+# {+MENU_BEGIN} inserts the dialog from the MENU_BEGIN value (in English, "CLIMB")
+# {n} creates a newline, without a page break
+# {0.5} creates a 0.5 second pause
+# {big}this text is large{/big}
+
+# Gameplay Control Commands (should never change)
+# {trigger x} this triggers an in-game event
+# {anchor} controls the visual position of the textbox in-game
+
+# GhostNet Module Postcards
+	POSTCARD_CELESTENETCLIENT_BACKTOMENU=			服务器将你传送回了主菜单。
+
+# GhostNet Module Options
+	MODOPTIONS_CELESTENETCLIENT_TITLE= 			CelesteNayNet - 蔚蓝喵服
+	MODOPTIONS_CELESTENETCLIENT_CONNECTED=			连接
+	MODOPTIONS_CELESTENETCLIENT_AUTORECONNECT=      自动断线重连
+	MODOPTIONS_CELESTENETCLIENT_SERVER=			    服务器: ((server))
+	MODOPTIONS_CELESTENETCLIENT_NAME=				用户名/密钥: ((name))
+	MODOPTIONS_CELESTENETCLIENT_INTERACTIONS=		互动
+	MODOPTIONS_CELESTENETCLIENT_SOUNDS= 			声音
+	MODOPTIONS_CELESTENETCLIENT_SOUNDVOLUME= 		声音大小
+	MODOPTIONS_CELESTENETCLIENT_ENTITIES= 		    实体
+	MODOPTIONS_CELESTENETCLIENT_SETTINGS=			设置
+	MODOPTIONS_CELESTENETCLIENT_DEVONLYHINT= 		仅供开发者使用。
+	MODOPTIONS_CELESTENETCLIENT_INTERACTIONSHINT= 	这只会影响你与其他玩家的互动
+	MODOPTIONS_CELESTENETCLIENT_ENTITIESHINT= 		实体指的是钥匙、草莓、Theo、水母等
+	MODOPTIONS_CELESTENETCLIENT_PLAYERLISTMODE= 	玩家列表模式
+	MODOPTIONS_CELESTENETCLIENT_PLAYERLISTLOCATIONS= 显示玩家位置
+	MODOPTIONS_CELESTENETCLIENT_PLAYERLISTPING= 	显示玩家延迟
+	MODOPTIONS_CELESTENETCLIENT_SHOWNEWMESSAGE= 	显示新消息
+	MODOPTIONS_CELESTENETCLIENT_PLAYEROPACTIY= 	玩家透明度
+	MODOPTIONS_CELESTENETCLIENT_NAMEOPACTIY= 		名称透明度
+	MODOPTIONS_CELESTENETCLIENT_SHOWOWN= 			只显示自己
+	MODOPTIONS_CELESTENETCLIENT_EMOTEWHEEL= 		表情轮盘
+	MODOPTIONS_CELESTENETCLIENT_UISIZE= 			UI 大小
+	MODOPTIONS_CELESTENETCLIENT_UIBLUR= 			UI 模糊
+	MODOPTIONS_CELESTENETCLIENT_UIBLURHINT=			如果你会出现卡顿，将 UI	模糊调低
+	MODOPTIONS_CELESTENETCLIENT_RELOAD= 			重新加载表情
+	MODOPTIONS_CELESTENETCLIENT_RELOADHINT=			用文本编辑器打开 Saves/modsettings-CelesteNet.celeste
+	MODOPTIONS_CELESTENETCLIENT_RECOMMENDED= 		安装推荐的 Mod
+	MODOPTIONS_CELESTENETCLIENT_RECOMMENDEDHINT=		((list))
