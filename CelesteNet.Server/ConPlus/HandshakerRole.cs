@@ -1,4 +1,6 @@
 using Celeste.Mod.CelesteNet.DataTypes;
+using Celeste.Mod.CelesteNet.Server.Utils;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -359,25 +361,25 @@ Who wants some tea?"
         }
 
         public string? AuthenticatePlayerNameKey(string nameKey, string conUID, out string? playerUID, out string? playerName) {
-            // Get the player UID and name from the player name-key
+            // New Auth Logic
             playerUID = playerName = null;
             if (nameKey.Length > 1 && nameKey[0] == '#') {
-                playerUID = Server.UserData.GetUID(nameKey.Substring(1));
-                if (playerUID != null && Server.UserData.TryLoad(playerUID, out BasicUserInfo info))
-                    playerName = info.Name;
-                else
-                    return string.Format(Server.Settings.MessageInvalidKey, nameKey);
-            } else if (nameKey.Length == 16 && nameKey.All("0123456789abcdefABCDEF".Contains) && (playerUID = Server.UserData.GetUID(nameKey)) != null) {
-                // this is for people who entered 16 hex-digits and probably forgot the # and we don't want to leak their key
-                if (Server.UserData.TryLoad(playerUID, out BasicUserInfo info)) {
-                    playerName = info.Name;
-                } else
-                    return string.Format(Server.Settings.MessageInvalidKey, nameKey);
-            } else if (!Server.Settings.AuthOnly) {
-                playerName = nameKey;
-                playerUID = $"fb-{conUID}";
-            } else
-                return string.Format(Server.Settings.MessageAuthOnly, nameKey);
+                Dictionary<string, string> request = new Dictionary<string, string>();
+                request.Add("token",nameKey.Substring(1));
+                try {
+                   dynamic result = JsonConvert.DeserializeObject<dynamic>(HttpUtils.Post(Server.Settings.ServerAuthApi + "/loginAuth", JsonConvert.SerializeObject(request)));
+                    if (result.code == "201") { 
+                        return string.Format(Server.Settings.MessageInvalidKey, nameKey);
+                    } else {
+                        playerUID = result.data.uid;
+                        playerName = result.data.username;
+                        return null;
+                    }
+                } catch (Exception ex) {
+                    return "Auth Server is shutdown";
+                }
+            }
+            return string.Format(Server.Settings.MessageAuthOnly, nameKey);
 
             // Check if the player's banned
             BanInfo? ban = null;

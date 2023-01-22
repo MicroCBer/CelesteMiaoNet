@@ -98,6 +98,6 @@ namespace Celeste.Mod.CelesteNet.Server {
         public string MessageAuthOnly { get; set; } = "Server supports only authenticated clients";
         public string MessageInvalidKey { get; set; } = "Invalid key";
         public string MessageBan { get; set; } = "Banned: {2}";
-
+        public string ServerAuthApi { get; set; } = "http://localhost:8080/api";
     }
 }
