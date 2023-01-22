@@ -11,6 +11,7 @@ using FMOD.Studio;
 using MonoMod.Utils;
 using System.Collections;
 using Celeste.Mod.CelesteNet.Client.Components;
+using Celeste.Mod.Helpers;
 
 namespace Celeste.Mod.CelesteNet.Client {
     public class CelesteNetClientModule : EverestModule {
@@ -47,7 +48,7 @@ namespace Celeste.Mod.CelesteNet.Client {
         public CelesteNetClientModule() {
             Instance = this;
         }
-
+        public EverestModule CelesteNetModule;
         public override void Load() {
             Logger.LogCelesteNetTag = true;
             Logger.Log(LogLevel.DEV, "lifecycle", $"CelesteNetClientModule Load");
@@ -64,6 +65,11 @@ namespace Celeste.Mod.CelesteNet.Client {
             Everest.Events.Celeste.OnShutdown += CelesteNetClientRC.Shutdown;
 
             CelesteNetClientSpriteDB.Load();
+            CelesteNetModule = (EverestModule) Activator.CreateInstance(FakeAssembly.GetFakeEntryAssembly().GetType("Celeste.Mod.NullModule"), new EverestModuleMetadata {
+                Name = "CelesteNet.Client",
+                VersionString = "2.0.0"
+            });
+            Everest.Register(CelesteNetModule);
         }
 
         public override void LoadContent(bool firstLoad) {
@@ -85,6 +91,7 @@ namespace Celeste.Mod.CelesteNet.Client {
 
             UIRenderTarget?.Dispose();
             UIRenderTarget = null;
+            typeof(Everest).FindMethod("Unregister").Invoke(null, new object[] { CelesteNetModule });
         }
 
         public override void LoadSettings() {

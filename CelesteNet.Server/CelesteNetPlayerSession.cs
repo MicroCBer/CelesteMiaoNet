@@ -185,7 +185,7 @@ namespace Celeste.Mod.CelesteNet.Server {
                 Name = Name,
                 FullName = fullName,
                 DisplayName = displayName,
-                NameColor = color
+                NameColor = Calc.HexToColor(color)
             };
             playerInfo.Meta = playerInfo.GenerateMeta(Server.Data);
             Server.Data.SetRef(playerInfo);

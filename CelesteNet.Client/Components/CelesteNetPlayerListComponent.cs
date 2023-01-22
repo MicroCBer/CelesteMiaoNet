@@ -166,6 +166,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     Name = player.DisplayName,
                     ScaleFactor = 0.75f
                 };
+                blob.Color = player.NameColor;
 
                 DataChannelList.Channel channel = Channels.List.FirstOrDefault(c => c.Players.Contains(player.ID));
                 if (channel != null && !string.IsNullOrEmpty(channel.Name))
@@ -401,7 +402,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             if (player != null) {
                 blob.Player = player;
                 blob.Name = player.DisplayName;
-
+                blob.Color = player.NameColor;
                 blob.LocationMode = locationMode;
                 if (locationMode != LocationModes.OFF && Client.Data.TryGetBoundRef(player, out DataPlayerState state))
                     GetState(blob, state);

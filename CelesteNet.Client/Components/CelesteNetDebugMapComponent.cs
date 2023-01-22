@@ -134,6 +134,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 ghost.Position = frame.Position;
                 ghost.SID = state.SID;
                 ghost.Mode = state.Mode;
+                ghost.Color = frame.Player.NameColor;
             }
         }
 
@@ -221,7 +222,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                         pos,
                         new(0.5f, 1f),
                         Vector2.One * 0.5f,
-                        Color.White * 0.8f,
+                        ghost.Color * 0.8f,
                         2f, Color.Black * 0.5f
                     );
                 }
@@ -237,6 +238,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             public Vector2 Position;
             public string SID;
             public AreaMode Mode;
+            public Color Color = Color.White;
         }
 
     }

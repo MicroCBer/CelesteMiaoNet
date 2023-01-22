@@ -14,17 +14,15 @@ namespace Celeste.Mod.CelesteNet.Client.Entities {
         public Entity Tracking;
         public string Name;
 
-        private DataPlayerInfo playerInfo;
         protected Camera Camera;
+        public Color Color = Color.White;
 
         public float Alpha = 1f;
 
-        public GhostNameTag(Entity tracking, string name, DataPlayerInfo info)
+        public GhostNameTag(Entity tracking, string name)
             : base(Vector2.Zero) {
             Tracking = tracking;
             Name = name;
-            playerInfo = info;
-
             Tag = TagsExt.SubHUD | Tags.Persistent | Tags.PauseUpdate | Tags.TransitionUpdate;
         }
 
@@ -60,13 +58,12 @@ namespace Celeste.Mod.CelesteNet.Client.Entities {
                 1920f - size.X * 0.25f - 32f, 1080f - 32f
             );
 
-
             CelesteNetClientFont.DrawOutline(
                 Name,
                 pos,
                 new(0.5f, 1f),
                 Vector2.One * 0.5f * scale,
-                Calc.HexToColor(playerInfo.NameColor) * a,
+                Color * a,
                 2f,
                 Color.Black * (a * a * a)
             );

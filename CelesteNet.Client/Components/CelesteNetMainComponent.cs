@@ -169,7 +169,11 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 return;
 
             if (string.IsNullOrEmpty(player.DisplayName)) {
-                ghost.RunOnUpdate(ghost => ghost.NameTag.Name = "");
+                ghost.RunOnUpdate(ghost => {
+                    ghost.NameTag.Name = "";
+                    ghost.NameTag.Color = Color.White;
+                    });
+                ;
                 Ghosts.TryRemove(player.ID, out _);
                 LastFrames.TryRemove(player.ID, out _);
                 Client.Data.FreeOrder<DataPlayerFrame>(player.ID);
@@ -198,7 +202,10 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     ghost == null)
                     return;
 
-                ghost.RunOnUpdate(ghost => ghost.NameTag.Name = "");
+                ghost.RunOnUpdate(ghost => {
+                    ghost.NameTag.Name = "";
+                    ghost.NameTag.Color = Color.White;
+                });
                 Ghosts.TryRemove(move.Player.ID, out _);
 
                 foreach (DataType data in Client.Data.GetBoundRefs(move.Player))
@@ -225,7 +232,10 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
                 Session session = Session;
                 if (session != null && (state.SID != session.Area.SID || state.Mode != session.Area.Mode || state.Level == LevelDebugMap)) {
-                    ghost.RunOnUpdate(ghost => ghost.NameTag.Name = "");
+                    ghost.RunOnUpdate(ghost => {
+                        ghost.NameTag.Name = "";
+                        ghost.NameTag.Color = Color.White;
+                    });
                     Ghosts.TryRemove(id, out _);
                     return;
                 }
@@ -282,6 +292,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 if (string.IsNullOrEmpty(ghost.NameTag.Name))
                     return;
                 ghost.NameTag.Name = frame.Player.DisplayName;
+                ghost.NameTag.Color = frame.Player.NameColor;
                 UpdateIdleTag(ghost, ref ghost.IdleTag, state.Idle);
                 ghost.UpdateGeneric(frame.Position, frame.Scale, frame.Color, frame.Facing, frame.Speed);
                 ghost.UpdateAnimation(frame.CurrentAnimationID, frame.CurrentAnimationFrame);
@@ -595,6 +606,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     ghost = Ghosts[player.ID] = new(Context, player, graphics.SpriteMode);
                     ghost.Active = false;
                     ghost.NameTag.Name = player.DisplayName;
+                    ghost.NameTag.Color = player.NameColor;
                     if (ghost.Sprite.Mode != graphics.SpriteMode)
                         UnsupportedSpriteModes.Add(graphics.SpriteMode);
                     RunOnMainThread(() => {
@@ -609,7 +621,10 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
         protected void RemoveGhost(DataPlayerInfo info) {
             Ghosts.TryRemove(info.ID, out Ghost ghost);
-            ghost?.RunOnUpdate(g => g.NameTag.Name = "");
+            ghost?.RunOnUpdate(ghost => {
+                ghost.NameTag.Name = "";
+                ghost.NameTag.Color = Color.White;
+            });
         }
 
         public void UpdateIdleTag(Entity target, ref GhostEmote idleTag, bool idle) {
@@ -784,7 +799,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
             if (PlayerNameTag == null || PlayerNameTag.Tracking != Player || PlayerNameTag.Scene != level) {
                 PlayerNameTag?.RemoveSelf();
-                level.Add(PlayerNameTag = new(Player, Client.PlayerInfo.DisplayName,Client.PlayerInfo));
+                level.Add(PlayerNameTag = new(Player, Client.PlayerInfo.DisplayName) { Color = Client.PlayerInfo.NameColor });
             }
             PlayerNameTag.Alpha = Settings.ShowOwnName ? 1f : 0f;
         }

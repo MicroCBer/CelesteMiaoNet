@@ -84,8 +84,9 @@ namespace Celeste.Mod.CelesteNet.Client.Entities {
             Collider = new Hitbox(8f, 11f, -4f, -11f);
             Add(new PlayerCollider(OnPlayer));
 
-            NameTag = new(this, "",playerInfo);
-            NameTag.Alpha = 0.85f;
+            NameTag = new(this, "") {
+                Alpha = 0.85f
+            };
 
             OpacityAdjustAlpha();
 
