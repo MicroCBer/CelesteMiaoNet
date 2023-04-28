@@ -33,6 +33,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dialog", "Dialog", "{30CD2B21-9175-456F-AF35-57BC9E735E9E}"
 	ProjectSection(SolutionItems) = preProject
 		Dialog\English.txt = Dialog\English.txt
+		Dialog\Simplified Chinese.txt = Dialog\Simplified Chinese.txt
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Graphics", "Graphics", "{EA46831D-A8C1-48F4-8E8A-B331EA03B73C}"

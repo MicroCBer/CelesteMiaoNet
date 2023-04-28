@@ -57,31 +57,31 @@ namespace Celeste.Mod.CelesteNet.Server.Control {
             if (!key.IsNullOrEmpty() &&
                 f.Server.UserData.GetUID(key) is string uid && !uid.IsNullOrEmpty() &&
                 f.Server.UserData.TryLoad(uid, out BasicUserInfo info)) {
-                    if (info.Tags.Contains(BasicUserInfo.TAG_AUTH_EXEC)) {
-                        do {
-                            key = Guid.NewGuid().ToString();
-                        } while (!f.CurrentSessionKeys.Add(key) || !f.CurrentSessionExecKeys.Add(key));
-                        c.Response.SetCookie(new(Frontend.COOKIE_SESSION, key, "/"));
-                        f.RespondJSON(c, new {
-                            Key = key,
-                            Info = $"Welcome, {info.Name}#{info.Discrim}"
-                        });
-                        return;
+                if (info.Tags.Contains(BasicUserInfo.TAG_AUTH_EXEC)) {
+                    do {
+                        key = Guid.NewGuid().ToString();
+                    } while (!f.CurrentSessionKeys.Add(key) || !f.CurrentSessionExecKeys.Add(key));
+                    c.Response.SetCookie(new(Frontend.COOKIE_SESSION, key, "/"));
+                    f.RespondJSON(c, new {
+                        Key = key,
+                        Info = $"Welcome, {info.Name}#{info.Discrim}"
+                    });
+                    return;
 
-                    } else if (info.Tags.Contains(BasicUserInfo.TAG_AUTH)) {
-                        do {
-                            key = Guid.NewGuid().ToString();
-                        } while (!f.CurrentSessionKeys.Add(key));
-                        c.Response.SetCookie(new(Frontend.COOKIE_SESSION, key, "/"));
-                        f.RespondJSON(c, new {
-                            Key = key,
-                            Info = $"Welcome, {info.Name}#{info.Discrim}"
-                        });
-                        return;
+                } else if (info.Tags.Contains(BasicUserInfo.TAG_AUTH)) {
+                    do {
+                        key = Guid.NewGuid().ToString();
+                    } while (!f.CurrentSessionKeys.Add(key));
+                    c.Response.SetCookie(new(Frontend.COOKIE_SESSION, key, "/"));
+                    f.RespondJSON(c, new {
+                        Key = key,
+                        Info = $"Welcome, {info.Name}#{info.Discrim}"
+                    });
+                    return;
 
-                    } else {
-                        // Fall through to "previous session" / password checks.
-                    }
+                } else {
+                    // Fall through to "previous session" / password checks.
+                }
             }
 
             if (expired) {
@@ -286,10 +286,14 @@ namespace Celeste.Mod.CelesteNet.Server.Control {
                     PlayersByID = auth ? f.Server.PlayersByID.Count : (int?) null,
                     PlayerRefs = f.Server.Data.GetRefs<DataPlayerInfo>().Length,
 
-                    TCPDownlinkBpS = TCPRecvBpSRate, TCPDownlinkPpS = TCPRecvPpSRate,
-                    UDPDownlinkBpS = UDPRecvBpSRate, UDPDownlinkPpS = UDPRecvPpSRate,
-                    TCPUplinkBpS = TCPSendBpSRate, TCPUplinkPpS = TCPSendPpSRate,
-                    UDPUplinkBpS = UDPSendBpSRate, UDPUplinkPpS = UDPSendPpSRate,
+                    TCPDownlinkBpS = TCPRecvBpSRate,
+                    TCPDownlinkPpS = TCPRecvPpSRate,
+                    UDPDownlinkBpS = UDPRecvBpSRate,
+                    UDPDownlinkPpS = UDPRecvPpSRate,
+                    TCPUplinkBpS = TCPSendBpSRate,
+                    TCPUplinkPpS = TCPSendPpSRate,
+                    UDPUplinkBpS = UDPSendBpSRate,
+                    UDPUplinkPpS = UDPSendPpSRate,
                 });
         }
 
@@ -346,10 +350,37 @@ namespace Celeste.Mod.CelesteNet.Server.Control {
                 };
             }).ToArray());
         }
-
+        [RCEndpoint(false, "/player", "?playername={}", null, "Player List", "Basic player list.")]
+        public static void Player(Frontend f, HttpRequestEventArgs c) {
+            NameValueCollection args = f.ParseQueryString(c.Request.RawUrl);
+            object responseObj;
+            using (f.Server.ConLock.R()) {
+                CelesteNetPlayerSession p = f.Server.PlayersByID.Values.FirstOrDefault(p => p.PlayerInfo.FullName == args["playername"]);
+                if (p == null) {
+                    responseObj = new { };
+                } else {
+                    p.Con.Data.TryGetRef(p.PlayerInfo.ID, out DataPlayerInfo player);
+                    p.Con.Data.TryGetBoundRef(player, out DataPlayerState state);
+                    //AreaData area = AreaDataExt.Get(state.SID);
+                    responseObj = new {
+                        ID = p.SessionID,
+                        p.PlayerInfo?.Name,
+                        p.PlayerInfo?.FullName,
+                        p.PlayerInfo?.DisplayName,
+                        Level = state?.Level,
+                        Sid = state?.SID,
+                        Side = ((char) ('A' + (int) state?.Mode)).ToString(),
+                        MapName = state?.SID,
+                        TCPPingMs = (p.Con as ConPlusTCPUDPConnection)?.TCPPingMs,
+                        UDPPingMs = (p.Con as ConPlusTCPUDPConnection)?.UDPPingMs,
+                    };
+                }
+            }
+            f.RespondJSON(c, responseObj);
+        }
         [RCEndpoint(false, "/players", null, null, "Player List", "Basic player list.")]
         public static void Players(Frontend f, HttpRequestEventArgs c) {
-            bool auth = f.IsAuthorized(c);
+            bool auth = true;
 
             // Gate the players endpoint behind control panel auth or player auth, as exposing online player names is a bit eh.
             if (!auth && (
@@ -365,29 +396,36 @@ namespace Celeste.Mod.CelesteNet.Server.Control {
 
             object responseObj;
             using (f.Server.ConLock.R()) {
-                responseObj = f.Server.PlayersByID.Values.Select(p => new {
-                    ID = p.SessionID,
-                    UID = auth ? p.UID : null,
-                    p.PlayerInfo?.Name,
-                    p.PlayerInfo?.FullName,
-                    p.PlayerInfo?.DisplayName,
-                    Avatar = f.Server.UserData.HasFile(p.UID, "avatar.png") ? $"{f.Settings.APIPrefix}/avatar?uid={p.UID}" : null,
+                responseObj = f.Server.PlayersByID.Values.Select(p => {
+                    p.Con.Data.TryGetRef(p.PlayerInfo.ID, out DataPlayerInfo player);
+                    p.Con.Data.TryGetBoundRef(player, out DataPlayerState state);
+                    //AreaData area = AreaDataExt.Get(state.SID);
+                    return new {
+                        ID = p.SessionID,
+                        UID = auth ? p.UID : null,
+                        p.PlayerInfo?.Name,
+                        p.PlayerInfo?.FullName,
+                        p.PlayerInfo?.DisplayName,
+                        Avatar = f.Server.UserData.HasFile(p.UID, "avatar.png") ? $"{f.Settings.APIPrefix}/avatar?uid={p.UID}" : null,
+                        Connection = auth ? p.Con.ID : null,
+                        ConnectionUID = auth ? p.Con.UID : null,
+                        Level = state.Level,
+                        Sid = state.SID,
+                        Side = ((char) ('A' + (int) state.Mode)).ToString(),
+                        MapName = state.SID,
+                        TCPPingMs = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPPingMs : null,
+                        UDPPingMs = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPPingMs : null,
 
-                    Connection = auth ? p.Con.ID : null,
-                    ConnectionUID = auth ? p.Con.UID : null,
-
-                    TCPPingMs = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPPingMs : null,
-                    UDPPingMs = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPPingMs : null,
-
-                    TCPDownlinkBpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPRecvRate.ByteRate : null,
-                    TCPDownlinkPpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPRecvRate.PacketRate : null,
-                    TCPUplinkBpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPSendRate.ByteRate : null,
-                    TCPUplinkPpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPSendRate.PacketRate : null,
-                    UDPDownlinkBpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPRecvRate.ByteRate : null,
-                    UDPDownlinkPpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPRecvRate.PacketRate : null,
-                    UDPUplinkBpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPSendRate.ByteRate : null,
-                    UDPUplinkPpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPSendRate.PacketRate : null,
-                }).ToArray();
+                        TCPDownlinkBpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPRecvRate.ByteRate : null,
+                        TCPDownlinkPpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPRecvRate.PacketRate : null,
+                        TCPUplinkBpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPSendRate.ByteRate : null,
+                        TCPUplinkPpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.TCPSendRate.PacketRate : null,
+                        UDPDownlinkBpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPRecvRate.ByteRate : null,
+                        UDPDownlinkPpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPRecvRate.PacketRate : null,
+                        UDPUplinkBpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPSendRate.ByteRate : null,
+                        UDPUplinkPpS = auth ? (p.Con as ConPlusTCPUDPConnection)?.UDPSendRate.PacketRate : null,
+                    };
+                });
             }
             f.RespondJSON(c, responseObj);
         }
@@ -398,7 +436,9 @@ namespace Celeste.Mod.CelesteNet.Server.Control {
             if (!f.IsAuthorized(c))
                 channels = channels.Where(c => !c.IsPrivate);
             f.RespondJSON(c, channels.Select(c => new {
-                c.ID, c.Name, c.IsPrivate,
+                c.ID,
+                c.Name,
+                c.IsPrivate,
                 Players = c.Players.Select(p => p.SessionID).ToArray()
             }).ToArray());
         }

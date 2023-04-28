@@ -92,7 +92,6 @@ namespace Celeste.Mod.CelesteNet.Client {
                     return;
                 }
                 Logger.Log(LogLevel.CRI, "main", $"Startup");
-
                 switch (Settings.ConnectionType) {
                     case ConnectionType.Auto:
                     case ConnectionType.TCPUDP:

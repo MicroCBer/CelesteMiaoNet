@@ -31,8 +31,10 @@ namespace Celeste.Mod.CelesteNet.Client {
                     Engine.Scene.OnEndOfFrame += () => EnabledEntry?.LeftPressed();
                 if (ServerEntry != null)
                     ServerEntry.Disabled = value || !(Engine.Scene is Overworld);
-                if (NameEntry != null)
-                    NameEntry.Disabled = value || !(Engine.Scene is Overworld);
+                if (UsernameEntry != null)
+                    UsernameEntry.Disabled = value || !(Engine.Scene is Overworld);
+                if (PasswordEntry != null)
+                    PasswordEntry.Disabled = value || !(Engine.Scene is Overworld);
             }
         }
         [YamlIgnore]
@@ -50,16 +52,19 @@ namespace Celeste.Mod.CelesteNet.Client {
         [YamlIgnore]
         [SettingIgnore]
         public TextMenu.Button ServerEntry { get; protected set; }
-
+        [SettingIgnore]
         public string Name { get; set; } = "Guest";
+        public string Username { get; set; } = "Guest";
         [YamlIgnore]
         [SettingIgnore]
-        public TextMenu.Button NameEntry { get; protected set; }
+        public TextMenu.Button UsernameEntry { get; protected set; }
 
-
-#if !DEBUG
+        public string Password { get; set; } = "NONE";
+        [YamlIgnore]
         [SettingIgnore]
-#endif
+        public TextMenu.Button PasswordEntry { get; protected set; }
+
+
         [SettingSubText("modoptions_celestenetclient_devonlyhint")]
         public ConnectionType ConnectionType { get; set; } = ConnectionType.Auto;
 
@@ -157,14 +162,8 @@ namespace Celeste.Mod.CelesteNet.Client {
         [YamlIgnore]
         public string Host {
             get {
-                string server = Server?.ToLowerInvariant();
-                int indexOfPort;
-                if (!string.IsNullOrEmpty(server) &&
-                    (indexOfPort = server.LastIndexOf(':')) != -1 &&
-                    int.TryParse(server.Substring(indexOfPort + 1), out _))
-                    return server.Substring(0, indexOfPort);
 
-                return server;
+                return "localhost";
             }
         }
         [SettingIgnore]
@@ -212,23 +211,36 @@ namespace Celeste.Mod.CelesteNet.Client {
 #endif
         }
 
-        public void CreateNameEntry(TextMenu menu, bool inGame) {
-            string name = Name;
-            if (name.StartsWith("#"))
-                name = "########";
-
+        public void CreateUsernameEntry(TextMenu menu, bool inGame) {
+            string name = Username;
             menu.Add(
-                (NameEntry = new TextMenu.Button(("modoptions_celestenetclient_name".DialogClean()).Replace("((name))", name)))
+                (UsernameEntry = new TextMenu.Button(("modoptions_celestenetclient_name".DialogClean()).Replace("((name))", name)))
                 .Pressed(() => {
                     Audio.Play("event:/ui/main/savefile_rename_start");
                     menu.SceneAs<Overworld>().Goto<OuiModOptionString>().Init<OuiModOptions>(
-                        Name,
-                        v => Name = v,
+                        Username,
+                        (v) => { Username = v;Name = "#" + Username + "#" + Password; },
                         maxValueLength: 20
                     );
                 })
             );
-            NameEntry.Disabled = inGame || Connected;
+            UsernameEntry.Disabled = inGame || Connected;
+        }
+        public void CreatePasswordEntry(TextMenu menu, bool inGame) {
+            string password = Password;
+            password = "########";
+            menu.Add(
+                (PasswordEntry = new TextMenu.Button(("modoptions_celestenetclient_password".DialogClean()).Replace("((password))", password)))
+                .Pressed(() => {
+                    Audio.Play("event:/ui/main/savefile_rename_start");
+                    menu.SceneAs<Overworld>().Goto<OuiModOptionString>().Init<OuiModOptions>(
+                        Password,
+                        (v) => { Password = v; Name = "#" + Username + "#" + Password; },
+                        maxValueLength: 20
+                    );
+                })
+            );
+            PasswordEntry.Disabled = inGame || Connected;
         }
 
         public void CreateEmotesEntry(TextMenu menu, bool inGame) {

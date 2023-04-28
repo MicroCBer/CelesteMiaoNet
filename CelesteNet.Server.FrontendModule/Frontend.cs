@@ -78,7 +78,6 @@ namespace Celeste.Mod.CelesteNet.Server.Control {
 
             HTTPServer.OnGet += HandleRequestRaw;
             HTTPServer.OnPost += HandleRequestRaw;
-
             HTTPServer.WebSocketServices.AddService<FrontendWebSocket>($"{Settings.APIPrefix}/ws", ws => ws.Frontend = this);
 
             HTTPServer.Start();
@@ -217,6 +216,7 @@ namespace Celeste.Mod.CelesteNet.Server.Control {
             try {
                 using (c.Request.InputStream)
                 using (c.Response) {
+                    c.Response.AddHeader("Access-Control-Allow-Origin", "*");
                     HandleRequest(c);
                 }
 

@@ -1,5 +1,5 @@
-- Name: CelesteNet.Client
-  Version: 2.1.1
+- Name: Miao.CelesteNet.Client
+  Version: 3.0.3
   DLL: CelesteNet.Client/bin/Debug/net452/CelesteNet.Client.dll
   Dependencies:
     - Name: Everest

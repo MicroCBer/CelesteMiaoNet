@@ -120,7 +120,7 @@ namespace Celeste.Mod.CelesteNet.Server {
 
                 // Do the teapot handshake
                 IConnectionFeature[]? conFeatures = null;
-                string? playerUID = null, playerName = null;
+                string? playerUID = null, playerName = null,playerPhotoUrl = null, playerColor= null;
                 CelesteNetClientOptions? clientOptions = null;
                 using (CancellationTokenSource tokenSrc = new()) {
                     // .NET is completly stupid, you can't cancel async socket operations
@@ -128,13 +128,13 @@ namespace Celeste.Mod.CelesteNet.Server {
                     tokenSrc.CancelAfter(TeapotTimeout);
                     tokenSrc.Token.Register(() => sock.Close());
                     try {
-                        (IConnectionFeature[], string, string, CelesteNetClientOptions)? teapotRes =
+                        (IConnectionFeature[], string, string, CelesteNetClientOptions,string,string) ? teapotRes =
                             await TeapotHandshake(
                                 sock, conToken, settings,
                                 ConPlusTCPUDPConnection.GetConnectionUID(remoteEP)
                             );
                         if (teapotRes != null)
-                            (conFeatures, playerUID, playerName, clientOptions) = teapotRes.Value;
+                            (conFeatures, playerUID, playerName, clientOptions,playerPhotoUrl,playerColor) = teapotRes.Value;
                     } catch {
                         if (tokenSrc.IsCancellationRequested) {
                             Logger.Log(LogLevel.VVV, "tcpudphs", $"Handshake for connection {remoteEP} timed out, maybe an old client?");
@@ -162,7 +162,7 @@ namespace Celeste.Mod.CelesteNet.Server {
                     // Better safe than sorry
                     if (!alive || !con.IsConnected)
                         return;
-                    Server.CreateSession(con, playerUID, playerName, clientOptions);
+                    Server.CreateSession(con, playerUID, playerName, clientOptions,playerPhotoUrl,playerColor);
                 }
             } catch {
                 con?.Dispose();
@@ -173,13 +173,13 @@ namespace Celeste.Mod.CelesteNet.Server {
 
         // Let's mess with web crawlers even more ;)
         // Also: I'm a Teapot
-        private async Task<(IConnectionFeature[] conFeatures, string playerUID, string playerName, CelesteNetClientOptions clientOptions)?> TeapotHandshake<T>(Socket sock, uint conToken, T settings, string conUID) where T : new() {
+        private async Task<(IConnectionFeature[] conFeatures, string playerUID, string playerName, CelesteNetClientOptions clientOption,string playerPhotoUrl,string playerColor)?> TeapotHandshake<T>(Socket sock, uint conToken, T settings, string conUID) where T : new() {
             using NetworkStream netStream = new(sock, false);
             BufferedStream bufStream = new(netStream);
             try {
                 using StreamReader reader = new(bufStream, CelesteNetUtils.UTF8NoBOM, false, 1024, true);
                 using StreamWriter writer = new(bufStream, CelesteNetUtils.UTF8NoBOM, 1024, true);
-                async Task<(IConnectionFeature[], string, string, CelesteNetClientOptions)?> Send500() {
+                async Task<(IConnectionFeature[], string, string, CelesteNetClientOptions,string,string)?> Send500() {
                     await writer.WriteAsync(
 @"HTTP/1.1 500 Internal Server Error
 Connection: close
@@ -248,11 +248,14 @@ Connection: close
                     return await Send500();
 
                 // Authenticate name-key
-                string? errorReason = AuthenticatePlayerNameKey(playerNameKey, conUID, out string? playerUID, out string? playerName);
+                string? errorReason = AuthenticatePlayerNameKey(playerNameKey, conUID, out string? playerUID, out string? playerName,out string? playerPhotoUrl,out string? playerColor);
                 if (playerUID == null)
                     errorReason ??= "No UID";
                 if (playerName == null)
                     errorReason ??= "No name";
+                if (playerPhotoUrl == null) {
+                    playerPhotoUrl = "https://celeste.centralteam.cn/assets/uploads/profile/default.jpg";
+                }
                 if (errorReason != null || playerUID == null || playerName == null) {
                     Logger.Log(LogLevel.VVV, "teapot", $"Error authenticating name-key '{playerNameKey}' for connection {sock.RemoteEndPoint}: {errorReason}");
                     await writer.WriteAsync(
@@ -336,7 +339,7 @@ Who wants some tea?"
                     .Trim().Replace("\r\n", "\n").Replace("\n", "\r\n") + "\r\n" + "\r\n"
                 );
 
-                return (matchedFeats.Select(f => f.feature).ToArray(), playerUID, playerName, clientOptions);
+                return (matchedFeats.Select(f => f.feature).ToArray(), playerUID, playerName, clientOptions,playerPhotoUrl,playerColor);
             } finally {
                 // We must try-catch buffered stream disposes as those will try to flush.
                 // If a network stream was torn down out of our control, it will throw!
@@ -360,12 +363,18 @@ Who wants some tea?"
             });
         }
 
-        public string? AuthenticatePlayerNameKey(string nameKey, string conUID, out string? playerUID, out string? playerName) {
+        public string? AuthenticatePlayerNameKey(string nameKey, string conUID, out string? playerUID, out string? playerName, out string? playerPhotoUrl, out string? playerColor) {
             // New Auth Logic
-            playerUID = playerName = null;
+            playerUID = playerName = playerPhotoUrl = null;
+            playerColor = null;
             if (nameKey.Length > 1 && nameKey[0] == '#') {
+                nameKey = nameKey.Substring(1);
+                if (nameKey.Split('#').Length != 2) {
+                    return "No Username/Password.";
+                }
                 Dictionary<string, string> request = new Dictionary<string, string>();
-                request.Add("token",nameKey.Substring(1));
+                request.Add("username",nameKey.Split('#')[0]);
+                request.Add("password", nameKey.Split('#')[1]);
                 try {
                    dynamic result = JsonConvert.DeserializeObject<dynamic>(HttpUtils.Post(Server.Settings.ServerAuthApi + "/loginAuth", JsonConvert.SerializeObject(request)));
                     if (result.code == "201") { 
@@ -373,11 +382,13 @@ Who wants some tea?"
                     } else {
                         playerUID = result.data.uid;
                         playerName = result.data.username;
+                        playerPhotoUrl = result.data.photoUrl;
+                        playerColor = result.data.color;
                         return null;
                     }
                 } catch (Exception ex) {
                     Logger.Log(LogLevel.WRN,"AuthService","Request Auth Login Failed.");
-                    return "Auth Server is shutdown";
+                    return string.Format(Server.Settings.MessageInvalidKey, nameKey);
                 }
             }
             return string.Format(Server.Settings.MessageAuthOnly, nameKey);

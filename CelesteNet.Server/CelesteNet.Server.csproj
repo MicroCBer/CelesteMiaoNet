@@ -56,4 +56,8 @@
     <PackageReference Include="MessagePackAnalyzer" Version="2.3.75" Condition="$(TargetFramework.Contains('.'))" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy D:\GITHUB\CelesteNet\CelesteNet.Server.FrontendModule\bin\Debug\net6.0\CelesteNet.Server.FrontendModule.dll D:\GITHUB\CelesteNet\CelesteNet.Server\bin\Debug\net6.0\Modules\CelesteNet.Server.FrontendModule.dll" />
+  </Target>
+
 </Project>

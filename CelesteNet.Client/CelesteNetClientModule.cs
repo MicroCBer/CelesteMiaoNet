@@ -67,7 +67,7 @@ namespace Celeste.Mod.CelesteNet.Client {
             CelesteNetClientSpriteDB.Load();
             CelesteNetModule = (EverestModule) Activator.CreateInstance(FakeAssembly.GetFakeEntryAssembly().GetType("Celeste.Mod.NullModule"), new EverestModuleMetadata {
                 Name = "CelesteNet.Client",
-                VersionString = "2.0.0"
+                VersionString = "2.1.1"
             });
             Everest.Register(CelesteNetModule);
         }
