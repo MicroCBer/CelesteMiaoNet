@@ -42,9 +42,10 @@ namespace Celeste.Mod.CelesteNet.Server {
         private uint RequestNextID = 0;
         private string playerPhotoUrl;
         private string playerColor;
+        private string playerPrefix;
         private DataNetFilterList? FilterList = null;
 
-        internal CelesteNetPlayerSession(CelesteNetServer server, CelesteNetConnection con, uint sesId, string uid, string name, CelesteNetClientOptions clientOptions, string playerPhotoUrl,string playerColor) {
+        internal CelesteNetPlayerSession(CelesteNetServer server, CelesteNetConnection con, uint sesId, string uid, string name, CelesteNetClientOptions clientOptions, string playerPhotoUrl,string playerColor,string playerPrefix) {
             Server = server;
             Con = con;
             SessionID = sesId;
@@ -56,7 +57,7 @@ namespace Celeste.Mod.CelesteNet.Server {
             this.playerPhotoUrl = playerPhotoUrl;
             this.playerColor = playerColor;
             Channel = server.Channels.Default;
-
+            this.playerPrefix = playerPrefix;
             Interlocked.Increment(ref Server.PlayerCounter);
             Con.OnSendFilter += ConSendFilter;
             Server.Data.RegisterHandlersIn(this);
@@ -128,7 +129,8 @@ namespace Celeste.Mod.CelesteNet.Server {
             }
             // Handle avatars
             string displayName = fullNameSpace;
-
+            if(!String.IsNullOrEmpty(playerPrefix))
+            fullNameSpace = $"[{playerPrefix}]{displayName}";
             string img = HttpUtils.GetImage(playerPhotoUrl);
             using (Stream? avatarStream = File.OpenRead(img)) {
                 if (avatarStream != null) {

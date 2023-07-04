@@ -48,7 +48,7 @@ namespace Celeste.Mod.CelesteNet.Client {
         [SettingIgnore]
 #endif
         [SettingSubText("modoptions_celestenetclient_devonlyhint")]
-        public string Server { get; set; } = "localhost";
+        public string Server { get; set; } = "celesteserver.centralteam.cn";
         [YamlIgnore]
         [SettingIgnore]
         public TextMenu.Button ServerEntry { get; protected set; }
@@ -163,7 +163,7 @@ namespace Celeste.Mod.CelesteNet.Client {
         public string Host {
             get {
 
-                return "localhost";
+                return "celesteserver.centralteam.cn";
             }
         }
         [SettingIgnore]
