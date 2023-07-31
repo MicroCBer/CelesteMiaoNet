@@ -153,6 +153,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     _Time = 0;
                     TextInput.OnInput += OnTextInput;
 
+                    IMEHelper.fixIMEForCeleste();
                 } else {
                     Typing = "";
                     CursorIndex = 0;
@@ -266,7 +267,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 if (MInput.Keyboard.Pressed(Keys.Enter)) {
                     if (!string.IsNullOrWhiteSpace(Typing))
                         Repeat.Insert(1, Typing);
-                    Send("你好，中文");
+                    Send(Typing);
                     Active = false;
 
                 } else if (MInput.Keyboard.Pressed(Keys.Down) && RepeatIndex > 0) {
