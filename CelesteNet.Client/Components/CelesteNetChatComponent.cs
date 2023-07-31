@@ -266,7 +266,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 if (MInput.Keyboard.Pressed(Keys.Enter)) {
                     if (!string.IsNullOrWhiteSpace(Typing))
                         Repeat.Insert(1, Typing);
-                    Send(Typing);
+                    Send("你好，中文");
                     Active = false;
 
                 } else if (MInput.Keyboard.Pressed(Keys.Down) && RepeatIndex > 0) {
@@ -402,13 +402,13 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 Context.RenderHelper.Rect(25f * scale, UI_HEIGHT - 125f * scale, UI_WIDTH - 50f * scale, 100f * scale, Color.Black * 0.8f);
 
                 CelesteNetClientFont.Draw(
-                    ">",
+                    "> ",
                     new(50f * scale, UI_HEIGHT - 105f * scale),
                     Vector2.Zero,
                     fontScale * new Vector2(0.5f, 1f),
                     Color.White * 0.5f
                 );
-                float offs = CelesteNetClientFont.Measure(">").X * scale;
+                float offs = CelesteNetClientFont.Measure("> ").X * scale;
 
                 string text = Typing;
                 CelesteNetClientFont.Draw(
