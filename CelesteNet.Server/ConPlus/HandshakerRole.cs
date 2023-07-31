@@ -377,8 +377,9 @@ Who wants some tea?"
                 request.Add("username",nameKey.Split('#')[0]);
                 request.Add("password", nameKey.Split('#')[1]);
                 try {
-                   dynamic result = JsonConvert.DeserializeObject<dynamic>(HttpUtils.Post(Server.Settings.ServerAuthApi + "/loginAuth", JsonConvert.SerializeObject(request)));
-                    if (result.code == "201") { 
+#if RELEASE
+                    dynamic result = JsonConvert.DeserializeObject<dynamic>(HttpUtils.Post(Server.Settings.ServerAuthApi + "/loginAuth", JsonConvert.SerializeObject(request)));
+                    if (result.code == "201") {
                         return string.Format(Server.Settings.MessageInvalidKey, nameKey);
                     } else {
                         playerUID = result.data.uid;
@@ -388,6 +389,14 @@ Who wants some tea?"
                         playerPrefix = result.data.prefix;
                         return null;
                     }
+#else
+                    playerUID = "";
+                    playerName = "TestAccount";
+                    playerPhotoUrl = "";
+                    playerColor = "";
+                    playerPrefix = "";
+                    return null;
+#endif
                 } catch (Exception ex) {
                     Logger.Log(LogLevel.WRN,"AuthService","Request Auth Login Failed.");
                     return string.Format(Server.Settings.MessageInvalidKey, nameKey);

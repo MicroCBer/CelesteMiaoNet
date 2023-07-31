@@ -47,8 +47,14 @@ namespace Celeste.Mod.CelesteNet.Client {
 #if !DEBUG
         [SettingIgnore]
 #endif
+
+#if RELEASE
         [SettingSubText("modoptions_celestenetclient_devonlyhint")]
         public string Server { get; set; } = "celesteserver.centralteam.cn";
+#else
+        [SettingSubText("modoptions_celestenetclient_devonlyhint")]
+        public string Server { get; set; } = "localhost";
+#endif
         [YamlIgnore]
         [SettingIgnore]
         public TextMenu.Button ServerEntry { get; protected set; }
@@ -162,8 +168,11 @@ namespace Celeste.Mod.CelesteNet.Client {
         [YamlIgnore]
         public string Host {
             get {
-
+#if RELEASE
+                return "localhost";
+#else
                 return "celesteserver.centralteam.cn";
+#endif
             }
         }
         [SettingIgnore]
@@ -181,7 +190,7 @@ namespace Celeste.Mod.CelesteNet.Client {
             }
         }
 
-        #endregion
+#endregion
 
 
         #region Custom Entry Creators
