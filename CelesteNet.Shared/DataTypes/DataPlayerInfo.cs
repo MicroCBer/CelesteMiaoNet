@@ -23,6 +23,7 @@ namespace Celeste.Mod.CelesteNet.DataTypes {
         public string DisplayName = "";
         public Color NameColor = Color.White;
 
+
         public override MetaType[] GenerateMeta(DataContext ctx)
             => new MetaType[] {
                 new MetaRef(ID, !FullName.IsNullOrEmpty())

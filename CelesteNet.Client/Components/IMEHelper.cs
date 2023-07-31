@@ -10,7 +10,6 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
     using System.Windows.Forms;
     using static System.Net.Mime.MediaTypeNames;
 
-    public delegate void Callback(string text);
 
     public static class IMEHelper {
         static bool createdInput = false;
@@ -18,52 +17,36 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         public static void fixIMEForCeleste() {
             if (!createdInput) {
                 createdInput = true;
-                CreateInvisibleFormWithInputBox((text) => { });
+                CreateInvisibleFormWithInputBox();
             }
         }
 
-        static string CreateInvisibleFormWithInputBox(Callback callback) {
+        static void CreateInvisibleFormWithInputBox() {
             string result = String.Empty;
 
             IntPtr celesteHandle = NativeMethods.FindWindow(null, "Celeste");
             if (celesteHandle == IntPtr.Zero) {
-                return "";
+                return ;
             }
 
             Form invisibleForm = new Form() {
-                Width = 300,
-                Height = 30,
+                Width = 0,
+                Height = 0,
                 ShowInTaskbar = false,
                 StartPosition = FormStartPosition.CenterScreen,
                 FormBorderStyle = FormBorderStyle.None,
-                Opacity = 1
+                Opacity = 0
             };
 
             TextBox textBox = new TextBox() {
                 Location = new Point(0, 0),
-                Size = new Size(300, 30),
+                Size = new Size(0, 0),
                 TabStop = false
             };
             invisibleForm.Controls.Add(textBox);
 
-            textBox.TextChanged += (sender, e) => {
-                callback(textBox.Text);
-            };
-
-            textBox.PreviewKeyDown += (sender, e) => {
-                if (e.KeyCode == Keys.Return || e.KeyCode == Keys.Escape) {
-                    result = textBox.Text;
-                    invisibleForm.Close();
-                }
-            };
-
-            invisibleForm.Deactivate += (sender, e) => {
-                result = textBox.Text;
-                invisibleForm.Close();
-            };
-
             invisibleForm.Shown += (sender, e) => {
-                invisibleForm.Opacity = 1;
+                invisibleForm.Opacity = 0;
                 textBox.Size = new Size(0, 0);
                 textBox.Focus();
             };
@@ -71,9 +54,10 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             NativeMethods.SetParent(invisibleForm.Handle, celesteHandle);
             NativeMethods.SetWindowPos(invisibleForm.Handle, IntPtr.Zero, 0, 0, 0, 0, SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
 
-            System.Windows.Forms.Application.Run(invisibleForm);
-
-            return result;
+            Task.Run(() => {
+                System.Windows.Forms.Application.Run(invisibleForm);
+            });
+            
         }
 
 

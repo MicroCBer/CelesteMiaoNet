@@ -27,6 +27,18 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         public Dictionary<string, DataChat> Pending = new();
         public string Typing = "";
 
+        public void AddLocalFakeMessage(string msg) {
+            var info = new DataPlayerInfo {};
+            info.Name = "Local";
+            info.NameColor = Color.Blue;
+
+            DataChat msgData = new() {
+                Player = info,
+                Text = msg
+            };
+            Log.Add(msgData);
+        }
+
         public ChatMode Mode => Active ? ChatMode.All : Settings.ShowNewMessages;
 
         public enum ChatMode {
@@ -176,6 +188,8 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         }
 
         public void Send(string text) {
+            if (Context.Main.ParseAndExecCommand(text)) return;
+
             text = text?.Trim();
             if (string.IsNullOrEmpty(text))
                 return;

@@ -40,6 +40,8 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         private bool WasInteractive;
         private int SentHairLength = 0;
 
+        private string watchPlayerName = null;
+
         public HashSet<string> ForceIdle = new();
         public bool StateUpdated;
 
@@ -68,6 +70,40 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
             UpdateOrder = 10200;
             Visible = false;
+        }
+
+        public bool ParseAndExecCommand(string msg) {
+            if (msg.StartsWith("/")) {
+                if (msg.StartsWith("/watch")) {
+                    // Parse player name with spaces.
+                    string[] args = msg.Split(' ');
+                    if (args.Length > 1) {
+                        var name = string.Join(" ", args.Skip(1));
+                        if (name == watchPlayerName) {
+                            Engine.Scene.Paused = false;
+                            SaveData.Instance.Assists.Invincible = false;
+                            Context.Chat.AddLocalFakeMessage($"Not watching {watchPlayerName} anymore.");
+                            watchPlayerName = null;
+                        } else {
+                            Engine.Scene.Paused = true;
+                            SaveData.Instance.Assists.Invincible = true;
+                            watchPlayerName = name;
+                            Context.Chat.AddLocalFakeMessage($"Watching {watchPlayerName}!");
+                        }
+                    } else {
+                        if(watchPlayerName != null)
+                            Context.Chat.AddLocalFakeMessage($"Not watching {watchPlayerName} anymore.");
+                        else
+                            Context.Chat.AddLocalFakeMessage($"Please give the name of who you want to watch.");
+                        watchPlayerName = null;
+                        Engine.Scene.Paused = false;
+                        SaveData.Instance.Assists.Invincible = false;                    }
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public override void Initialize() {
@@ -279,6 +315,13 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 ghost = null;
             }
 
+            if (watchPlayerName != null && frame.Player.Name == watchPlayerName) {
+                RunOnMainThread(() => {
+                    Player.Position = frame.Position;
+                    Player.Speed = frame.Speed;
+                });
+            }
+            
             if (level == null || outside)
                 return;
 
@@ -1002,6 +1045,9 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         }
 
         public void SendFrame() {
+            if (watchPlayerName == null) // Don't send frames when watching someone
+                return;
+
             Player player = Player;
             if (player == null || player.Sprite == null || player.Hair == null)
                 return;
@@ -1066,6 +1112,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 animID = -1;
 
             try {
+
                 Client?.Send(new DataPlayerFrame {
                     Player = Client.PlayerInfo,
 
