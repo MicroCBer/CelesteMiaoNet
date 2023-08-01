@@ -2,6 +2,7 @@
 using Celeste.Mod.CelesteNet.Client.Entities;
 using Celeste.Mod.CelesteNet.DataTypes;
 using Celeste.Mod.Core;
+using Celeste.Pico8;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -41,6 +42,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         private int SentHairLength = 0;
 
         private string watchPlayerName = null;
+        private bool WatchWaitingForFirstFrame = false;
 
         public HashSet<string> ForceIdle = new();
         public bool StateUpdated;
@@ -75,30 +77,35 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         public bool ParseAndExecCommand(string msg) {
             if (msg.StartsWith("/")) {
                 if (msg.StartsWith("/watch")) {
+                    SaveData.Instance.Assists.Invincible = false;
+                    Player.Sprite.Active = true;
+                    Player.Sprite.Visible = true;
+
                     // Parse player name with spaces.
                     string[] args = msg.Split(' ');
                     if (args.Length > 1) {
                         var name = string.Join(" ", args.Skip(1));
                         if (name == watchPlayerName) {
-                            Engine.Scene.Paused = false;
-                            SaveData.Instance.Assists.Invincible = false;
                             Context.Chat.AddLocalFakeMessage($"Not watching {watchPlayerName} anymore.");
+                            Player.Die(Player.Position, true, false);
                             watchPlayerName = null;
                         } else {
-                            Engine.Scene.Paused = true;
-                            SaveData.Instance.Assists.Invincible = true;
                             watchPlayerName = name;
+                            Context.Chat.Send($"/tp {watchPlayerName}");
                             Context.Chat.AddLocalFakeMessage($"Watching {watchPlayerName}!");
                         }
                     } else {
-                        if(watchPlayerName != null)
+                        if (watchPlayerName != null) {
+                            Player.Die(Player.Position, true, false);
                             Context.Chat.AddLocalFakeMessage($"Not watching {watchPlayerName} anymore.");
+                        }
                         else
                             Context.Chat.AddLocalFakeMessage($"Please give the name of who you want to watch.");
-                        watchPlayerName = null;
-                        Engine.Scene.Paused = false;
-                        SaveData.Instance.Assists.Invincible = false;                    }
 
+                        watchPlayerName = null;
+                    }
+
+                    SaveData.Instance.Assists.Invincible = false;
                     return true;
                 }
             }
@@ -126,6 +133,12 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     On.Celeste.PlayerHair.GetHairScale += OnGetHairScale;
                     On.Celeste.PlayerHair.GetHairTexture += OnGetHairTexture;
                     On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool += OnDashTrailAdd;
+
+                    On.Celeste.Level.Begin += (e, r) => {
+                        if (WatchWaitingForFirstFrame) {
+                            Engine.Scene.Paused = true;
+                        }
+                    };
 
                     MethodInfo transitionRoutine =
                         typeof(Level).GetNestedType("<TransitionRoutine>d__24", BindingFlags.NonPublic)
@@ -307,6 +320,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             Level level = PlayerBody?.Scene as Level;
             bool outside = IsGhostOutside(session, level, frame.Player, out DataPlayerState state);
 
+
             if (!Ghosts.TryGetValue(frame.Player.ID, out Ghost ghost) ||
                 ghost == null ||
                 (ghost.Active && ghost.Scene != level) ||
@@ -315,13 +329,37 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 ghost = null;
             }
 
-            if (watchPlayerName != null && frame.Player.Name == watchPlayerName) {
-                RunOnMainThread(() => {
-                    Player.Position = frame.Position;
-                    Player.Speed = frame.Speed;
-                });
+            if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null) {
+                if (frame.Dead && session != null) {
+                    session.StartedFromBeginning = false;
+                    LevelEnter.Go(session, false);
+
+                    Task.Delay(100).ContinueWith(t => {
+                        RunOnMainThread(() => {
+                            Engine.Scene.Paused = true;
+                            WatchWaitingForFirstFrame = true;
+                        });
+                    });
+                    
+                } else {
+                    RunOnMainThread(() => {
+                        if (WatchWaitingForFirstFrame) {
+                            Engine.Scene.Paused = false;
+                            WatchWaitingForFirstFrame = false;
+                        }
+
+                        SaveData.Instance.Assists.Invincible = true;
+                        PlayerBody.Visible = false;
+                        PlayerBody.Collidable = false;
+                        Player.DummyGravity = false;
+                        Player.Hair.Sprite.Visible = false;
+                        Player.Sprite.Visible = false;
+                        Player.Position = frame.Position;
+                        Player.Speed = frame.Speed;
+                    });
+                }
             }
-            
+
             if (level == null || outside)
                 return;
 
@@ -1045,7 +1083,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         }
 
         public void SendFrame() {
-            if (watchPlayerName == null) // Don't send frames when watching someone
+            if (watchPlayerName != null) // Don't send frames when watching someone
                 return;
 
             Player player = Player;

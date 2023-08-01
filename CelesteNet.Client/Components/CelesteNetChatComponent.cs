@@ -165,7 +165,10 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     _Time = 0;
                     TextInput.OnInput += OnTextInput;
 
-                    IMEHelper.fixIMEForCeleste();
+                    if (IMEHelper.fixIMEForCeleste()) {
+                        AddLocalFakeMessage("Tips: 如果输入不了请点一下鼠标");
+                    }
+                    
                 } else {
                     Typing = "";
                     CursorIndex = 0;

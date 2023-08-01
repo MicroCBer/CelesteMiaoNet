@@ -14,11 +14,15 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
     public static class IMEHelper {
         static bool createdInput = false;
 
-        public static void fixIMEForCeleste() {
+        public static bool fixIMEForCeleste() {
             if (!createdInput) {
                 createdInput = true;
                 CreateInvisibleFormWithInputBox();
+
+                return true;
             }
+
+            return false;
         }
 
         static void CreateInvisibleFormWithInputBox() {
@@ -48,16 +52,19 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             invisibleForm.Shown += (sender, e) => {
                 invisibleForm.Opacity = 0;
                 textBox.Size = new Size(0, 0);
-                textBox.Focus();
+              //  textBox.Focus();
             };
 
             NativeMethods.SetParent(invisibleForm.Handle, celesteHandle);
             NativeMethods.SetWindowPos(invisibleForm.Handle, IntPtr.Zero, 0, 0, 0, 0, SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
 
+
             Task.Run(() => {
+                Task.Delay(100).ContinueWith((t) => {
+                    NativeMethods.SetFocus(celesteHandle);
+                });
                 System.Windows.Forms.Application.Run(invisibleForm);
             });
-            
         }
 
 
@@ -70,6 +77,9 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
             [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
             public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, SetWindowPosFlags uFlags);
+
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            public static extern IntPtr SetFocus(IntPtr hWnd);
         }
 
         [Flags]

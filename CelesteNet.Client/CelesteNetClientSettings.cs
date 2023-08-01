@@ -168,11 +168,7 @@ namespace Celeste.Mod.CelesteNet.Client {
         [YamlIgnore]
         public string Host {
             get {
-#if RELEASE
-                return "localhost";
-#else
                 return "celesteserver.centralteam.cn";
-#endif
             }
         }
         [SettingIgnore]
