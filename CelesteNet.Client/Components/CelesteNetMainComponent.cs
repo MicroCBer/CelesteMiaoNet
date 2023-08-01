@@ -78,8 +78,10 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             if (msg.StartsWith("/")) {
                 if (msg.StartsWith("/watch")) {
                     SaveData.Instance.Assists.Invincible = false;
-                    Player.Sprite.Active = true;
-                    Player.Sprite.Visible = true;
+                    if (Player != null) {
+                        Player.Sprite.Active = true;
+                        Player.Sprite.Visible = true;
+                    }
 
                     // Parse player name with spaces.
                     string[] args = msg.Split(' ');
@@ -87,7 +89,8 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                         var name = string.Join(" ", args.Skip(1));
                         if (name == watchPlayerName) {
                             Context.Chat.AddLocalFakeMessage($"Not watching {watchPlayerName} anymore.");
-                            Player.Die(Player.Position, true, false);
+                            if (Player != null)
+                                Player.Die(Player.Position, true, false);
                             watchPlayerName = null;
                         } else {
                             watchPlayerName = name;
@@ -134,6 +137,14 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     On.Celeste.PlayerHair.GetHairTexture += OnGetHairTexture;
                     On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool += OnDashTrailAdd;
 
+                    On.Celeste.PlayerCollider.Check += (orig, self, player) => {
+                        if (watchPlayerName != null) {
+                            return false;
+                        }
+
+                        return orig(self, player);
+                    };
+
                     MethodInfo transitionRoutine =
                         typeof(Level).GetNestedType("<TransitionRoutine>d__24", BindingFlags.NonPublic)
                         ?.GetMethod("MoveNext");
@@ -161,13 +172,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     On.Celeste.PlayerHair.GetHairTexture -= OnGetHairTexture;
                     On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool -= OnDashTrailAdd;
 
-                    On.Celeste.PlayerCollider.Check += (orig, self, player) => {
-                        if (watchPlayerName != null) {
-                            return false;
-                        }
-
-                        return orig(self, player);
-                    };
+   
 
                     ILHookTransitionRoutine?.Dispose();
                     ILHookTransitionRoutine = null;
@@ -339,19 +344,29 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     
                 } else {
                     RunOnMainThread(() => {
-                        if (WatchWaitingForFirstFrame) {
-                            Engine.Scene.Paused = false;
-                            WatchWaitingForFirstFrame = false;
+                        if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null) {
+                            if (Player != null) {
+                                SaveData.Instance.Assists.Invincible = true;
+                                         PlayerBody.Visible = false;
+                                           PlayerBody.Collidable = false;
+                                         //  Player.DummyGravity = false;
+                                           Player.Hair.Sprite.Visible = false;
+                                           Player.Sprite.Visible = false;
+                                           Player.Position = frame.Position;
+                                           Player.Speed = frame.Speed;
+                                           Player.EnforceLevelBounds = true;
+                                Player.ForceCameraUpdate = true;
+                                Player.StateMachine.State = Player.StFrozen;
+
+                                if (Player.Scene != null && Player.Scene is Level level) {
+                                    level.EnforceBounds(Player);
+                                }
+                            } else {
+                                Logger.Log(LogLevel.WRN, "Watch", "Player is NULL");
+                            }
                         }
 
-                        SaveData.Instance.Assists.Invincible = true;
-                        PlayerBody.Visible = false;
-                        PlayerBody.Collidable = false;
-                        Player.DummyGravity = false;
-                        Player.Hair.Sprite.Visible = false;
-                        Player.Sprite.Visible = false;
-                        Player.Position = frame.Position;
-                        Player.Speed = frame.Speed;
+                       
                     });
                 }
             }
@@ -911,10 +926,6 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
             Player = level.Tracker.GetEntity<Player>();
             PlayerBody = Player;
-
-            if (WatchWaitingForFirstFrame) {
-                Engine.Scene.Paused = true;
-            }
 
             SendState();
         }

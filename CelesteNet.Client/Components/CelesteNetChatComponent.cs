@@ -34,7 +34,14 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
             DataChat msgData = new() {
                 Player = info,
-                Text = msg
+                Text = msg,
+
+                Color = Color.Blue,
+                CreatedByServer = true,
+                Date = DateTime.Now,
+                ReceivedDate = DateTime.Now,
+                ID = 1,
+
             };
             Log.Add(msgData);
         }
@@ -363,8 +370,6 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             }
 
         }
-
-        private char? lastInputChar = null;
 
 
         public void OnTextInput(char c) {
