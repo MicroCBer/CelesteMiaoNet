@@ -134,12 +134,6 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     On.Celeste.PlayerHair.GetHairTexture += OnGetHairTexture;
                     On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool += OnDashTrailAdd;
 
-                    On.Celeste.Level.Begin += (e, r) => {
-                        if (WatchWaitingForFirstFrame) {
-                            Engine.Scene.Paused = true;
-                        }
-                    };
-
                     MethodInfo transitionRoutine =
                         typeof(Level).GetNestedType("<TransitionRoutine>d__24", BindingFlags.NonPublic)
                         ?.GetMethod("MoveNext");
@@ -166,6 +160,14 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     On.Celeste.PlayerHair.GetHairScale -= OnGetHairScale;
                     On.Celeste.PlayerHair.GetHairTexture -= OnGetHairTexture;
                     On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool -= OnDashTrailAdd;
+
+                    On.Celeste.PlayerCollider.Check += (orig, self, player) => {
+                        if (watchPlayerName != null) {
+                            return false;
+                        }
+
+                        return orig(self, player);
+                    };
 
                     ILHookTransitionRoutine?.Dispose();
                     ILHookTransitionRoutine = null;
@@ -333,13 +335,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 if (frame.Dead && session != null) {
                     session.StartedFromBeginning = false;
                     LevelEnter.Go(session, false);
-
-                    Task.Delay(100).ContinueWith(t => {
-                        RunOnMainThread(() => {
-                            Engine.Scene.Paused = true;
-                            WatchWaitingForFirstFrame = true;
-                        });
-                    });
+                    WatchWaitingForFirstFrame = true;
                     
                 } else {
                     RunOnMainThread(() => {
@@ -915,6 +911,10 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
             Player = level.Tracker.GetEntity<Player>();
             PlayerBody = Player;
+
+            if (WatchWaitingForFirstFrame) {
+                Engine.Scene.Paused = true;
+            }
 
             SendState();
         }
