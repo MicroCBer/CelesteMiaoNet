@@ -364,6 +364,9 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
         }
 
+        private char? lastInputChar = null;
+
+
         public void OnTextInput(char c) {
             if (!Active)
                 return;

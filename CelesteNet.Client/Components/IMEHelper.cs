@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,7 +16,16 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
     public static class IMEHelper {
         static bool createdInput = false;
 
+        static bool isCore = isUsingCore();
+        public static bool isUsingCore() {
+            var name = Assembly.GetEntryAssembly()?
+                .GetCustomAttribute<TargetFrameworkAttribute>()?
+                .FrameworkName;
+            return name.StartsWith(".NETCore");
+        }
         public static bool fixIMEForCeleste() {
+            if (isCore) return false;
+
             if (!createdInput) {
                 createdInput = true;
                 CreateInvisibleFormWithInputBox();
