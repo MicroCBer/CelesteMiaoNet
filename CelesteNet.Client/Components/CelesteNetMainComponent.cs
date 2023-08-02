@@ -2,6 +2,7 @@
 using Celeste.Mod.CelesteNet.Client.Entities;
 using Celeste.Mod.CelesteNet.DataTypes;
 using Celeste.Mod.Core;
+using Celeste.Pico8;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -40,6 +41,9 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         private bool WasInteractive;
         private int SentHairLength = 0;
 
+        private string watchPlayerName = null;
+        private bool WatchWaitingForFirstFrame = false;
+
         public HashSet<string> ForceIdle = new();
         public bool StateUpdated;
 
@@ -70,6 +74,48 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             Visible = false;
         }
 
+        public bool ParseAndExecCommand(string msg) {
+            if (msg.StartsWith("/")) {
+                if (msg.StartsWith("/watch")) {
+                    SaveData.Instance.Assists.Invincible = false;
+                    if (Player != null) {
+                        Player.Sprite.Active = true;
+                        Player.Sprite.Visible = true;
+                    }
+
+                    // Parse player name with spaces.
+                    string[] args = msg.Split(' ');
+                    if (args.Length > 1) {
+                        var name = string.Join(" ", args.Skip(1));
+                        if (name == watchPlayerName) {
+                            Context.Chat.AddLocalFakeMessage($"Not watching {watchPlayerName} anymore.");
+                            if (Player != null)
+                                Player.Die(Player.Position, true, false);
+                            watchPlayerName = null;
+                        } else {
+                            watchPlayerName = name;
+                            Context.Chat.Send($"/tp {watchPlayerName}");
+                            Context.Chat.AddLocalFakeMessage($"Watching {watchPlayerName}!");
+                        }
+                    } else {
+                        if (watchPlayerName != null) {
+                            Player.Die(Player.Position, true, false);
+                            Context.Chat.AddLocalFakeMessage($"Not watching {watchPlayerName} anymore.");
+                        }
+                        else
+                            Context.Chat.AddLocalFakeMessage($"Please give the name of who you want to watch.");
+
+                        watchPlayerName = null;
+                    }
+
+                    SaveData.Instance.Assists.Invincible = false;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public override void Initialize() {
             base.Initialize();
 
@@ -90,6 +136,14 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     On.Celeste.PlayerHair.GetHairScale += OnGetHairScale;
                     On.Celeste.PlayerHair.GetHairTexture += OnGetHairTexture;
                     On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool += OnDashTrailAdd;
+
+                    On.Celeste.PlayerCollider.Check += (orig, self, player) => {
+                        if (watchPlayerName != null) {
+                            return false;
+                        }
+
+                        return orig(self, player);
+                    };
 
                     MethodInfo transitionRoutine =
                         typeof(Level).GetNestedType("<TransitionRoutine>d__24", BindingFlags.NonPublic)
@@ -117,6 +171,8 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     On.Celeste.PlayerHair.GetHairScale -= OnGetHairScale;
                     On.Celeste.PlayerHair.GetHairTexture -= OnGetHairTexture;
                     On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool -= OnDashTrailAdd;
+
+   
 
                     ILHookTransitionRoutine?.Dispose();
                     ILHookTransitionRoutine = null;
@@ -271,12 +327,48 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             Level level = PlayerBody?.Scene as Level;
             bool outside = IsGhostOutside(session, level, frame.Player, out DataPlayerState state);
 
+
             if (!Ghosts.TryGetValue(frame.Player.ID, out Ghost ghost) ||
                 ghost == null ||
                 (ghost.Active && ghost.Scene != level) ||
                 outside) {
                 RemoveGhost(frame.Player);
                 ghost = null;
+            }
+
+            if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null) {
+                if (frame.Dead && session != null) {
+                    session.StartedFromBeginning = false;
+                    LevelEnter.Go(session, false);
+                    WatchWaitingForFirstFrame = true;
+                    
+                } else {
+                    RunOnMainThread(() => {
+                        if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null) {
+                            if (Player != null) {
+                                SaveData.Instance.Assists.Invincible = true;
+                                         PlayerBody.Visible = false;
+                                           PlayerBody.Collidable = false;
+                                         //  Player.DummyGravity = false;
+                                           Player.Hair.Sprite.Visible = false;
+                                           Player.Sprite.Visible = false;
+                                           Player.Position = frame.Position;
+                                           Player.Speed = frame.Speed;
+                                           Player.EnforceLevelBounds = true;
+                                Player.ForceCameraUpdate = true;
+                                Player.StateMachine.State = Player.StFrozen;
+
+                                if (Player.Scene != null && Player.Scene is Level level) {
+                                    level.EnforceBounds(Player);
+                                }
+                            } else {
+                                Logger.Log(LogLevel.WRN, "Watch", "Player is NULL");
+                            }
+                        }
+
+                       
+                    });
+                }
             }
 
             if (level == null || outside)
@@ -809,6 +901,17 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 SendState();
             StateUpdated = false;
 
+            if (CelesteNetClientModule.Settings.OpacityNearSelf && Player != null) {
+                foreach (var ghost in Ghosts.Values) {
+                    if (ghost.PlayerInfo.Name == watchPlayerName) {
+                        ghost.Alpha = 1f;
+                    } else {
+                        ghost.Alpha = Math.Min(Math.Max(0.3f, (ghost.Position - Player.Position).LengthSquared() / 3000f), 1f);
+                    }
+                }
+            }
+            
+
             if (Player != null)
                 SendFrame();
         }
@@ -1002,6 +1105,9 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         }
 
         public void SendFrame() {
+            if (watchPlayerName != null) // Don't send frames when watching someone
+                return;
+
             Player player = Player;
             if (player == null || player.Sprite == null || player.Hair == null)
                 return;
@@ -1066,6 +1172,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 animID = -1;
 
             try {
+
                 Client?.Send(new DataPlayerFrame {
                     Player = Client.PlayerInfo,
 

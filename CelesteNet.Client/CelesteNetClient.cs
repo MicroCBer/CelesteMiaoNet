@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -78,6 +79,7 @@ namespace Celeste.Mod.CelesteNet.Client {
             }
             ConFeatures = conFeatures.ToArray();
         }
+
 
         public void Start(CancellationToken token) {
             if (IsAlive) {

@@ -47,8 +47,14 @@ namespace Celeste.Mod.CelesteNet.Client {
 #if !DEBUG
         [SettingIgnore]
 #endif
+
+#if RELEASE
         [SettingSubText("modoptions_celestenetclient_devonlyhint")]
         public string Server { get; set; } = "celesteserver.centralteam.cn";
+#else
+        [SettingSubText("modoptions_celestenetclient_devonlyhint")]
+        public string Server { get; set; } = "localhost";
+#endif
         [YamlIgnore]
         [SettingIgnore]
         public TextMenu.Button ServerEntry { get; protected set; }
@@ -78,6 +84,11 @@ namespace Celeste.Mod.CelesteNet.Client {
             set => Logger.Level = value;
         }
 
+        [SettingName("MODOPTIONS_CELESTENETCLIENT_AUTO_CONNECT")]
+        public bool AutoConnect { get; set; } = true;
+
+        [SettingName("MODOPTIONS_CELESTENETCLIENT_OPATICY_NEAR_SELF")]
+        public bool OpacityNearSelf { get; set; } = true;
 
         [SettingName("modoptions_celestenetclient_interactions")]
         [SettingSubText("modoptions_celestenetclient_interactionshint")]
@@ -162,7 +173,6 @@ namespace Celeste.Mod.CelesteNet.Client {
         [YamlIgnore]
         public string Host {
             get {
-
                 return "celesteserver.centralteam.cn";
             }
         }
@@ -181,7 +191,7 @@ namespace Celeste.Mod.CelesteNet.Client {
             }
         }
 
-        #endregion
+#endregion
 
 
         #region Custom Entry Creators

@@ -22,11 +22,11 @@ namespace Celeste.Mod.CelesteNet.Client {
     // Copy of ActiveFont that always uses the English font.
     public static class CelesteNetClientFont {
 
-        public static PixelFont Font => Fonts.Get(Dialog.Languages["english"].FontFace);
+        public static PixelFont Font => Fonts.Get(Dialog.Languages["schinese"].FontFace);
 
         public static PixelFontSize FontSize => Font.Get(BaseSize);
 
-        public static float BaseSize => Dialog.Languages["english"].FontFaceSize;
+        public static float BaseSize => Dialog.Languages["schinese"].FontFaceSize;
 
         public static float LineHeight => FontSize.LineHeight;
 

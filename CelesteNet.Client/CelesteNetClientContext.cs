@@ -90,6 +90,8 @@ namespace Celeste.Mod.CelesteNet.Client {
 
         public void Init(CelesteNetClientSettings settings) {
             Logger.Log(LogLevel.DEV, "lifecycle", $"CelesteNetClientContext Init: Creating client");
+
+
             Client = new(settings, new() {
                 IsReconnect = IsReconnect
             });

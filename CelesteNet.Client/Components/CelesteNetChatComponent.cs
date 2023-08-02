@@ -27,6 +27,25 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         public Dictionary<string, DataChat> Pending = new();
         public string Typing = "";
 
+        public void AddLocalFakeMessage(string msg) {
+            var info = new DataPlayerInfo {};
+            info.Name = "Local";
+            info.NameColor = Color.Blue;
+
+            DataChat msgData = new() {
+                Player = info,
+                Text = msg,
+
+                Color = Color.Blue,
+                CreatedByServer = true,
+                Date = DateTime.Now,
+                ReceivedDate = DateTime.Now,
+                ID = 1,
+
+            };
+            Log.Add(msgData);
+        }
+
         public ChatMode Mode => Active ? ChatMode.All : Settings.ShowNewMessages;
 
         public enum ChatMode {
@@ -153,6 +172,10 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     _Time = 0;
                     TextInput.OnInput += OnTextInput;
 
+                    if (IMEHelper.fixIMEForCeleste()) {
+                        AddLocalFakeMessage("Tips: 如果输入不了请点一下鼠标");
+                    }
+                    
                 } else {
                     Typing = "";
                     CursorIndex = 0;
@@ -175,6 +198,8 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         }
 
         public void Send(string text) {
+            if (Context.Main.ParseAndExecCommand(text)) return;
+
             text = text?.Trim();
             if (string.IsNullOrEmpty(text))
                 return;
@@ -346,6 +371,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
         }
 
+
         public void OnTextInput(char c) {
             if (!Active)
                 return;
@@ -402,13 +428,13 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 Context.RenderHelper.Rect(25f * scale, UI_HEIGHT - 125f * scale, UI_WIDTH - 50f * scale, 100f * scale, Color.Black * 0.8f);
 
                 CelesteNetClientFont.Draw(
-                    ">",
+                    "> ",
                     new(50f * scale, UI_HEIGHT - 105f * scale),
                     Vector2.Zero,
                     fontScale * new Vector2(0.5f, 1f),
                     Color.White * 0.5f
                 );
-                float offs = CelesteNetClientFont.Measure(">").X * scale;
+                float offs = CelesteNetClientFont.Measure("> ").X * scale;
 
                 string text = Typing;
                 CelesteNetClientFont.Draw(
