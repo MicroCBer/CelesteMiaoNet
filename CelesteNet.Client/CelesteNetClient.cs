@@ -80,6 +80,7 @@ namespace Celeste.Mod.CelesteNet.Client {
             ConFeatures = conFeatures.ToArray();
         }
 
+
         public void Start(CancellationToken token) {
             if (IsAlive) {
                 Logger.Log(LogLevel.DEV, "lifecycle", $"CelesteNetClient: Start called but IsAlive already");

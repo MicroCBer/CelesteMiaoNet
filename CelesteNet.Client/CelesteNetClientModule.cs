@@ -70,6 +70,18 @@ namespace Celeste.Mod.CelesteNet.Client {
                 VersionString = "2.2.1"
             });
             Everest.Register(CelesteNetModule);
+
+            On.Celeste.OuiMainMenu.OnBegin += OuiMainMenu_OnBegin;
+        }
+
+        private void OuiMainMenu_OnBegin(On.Celeste.OuiMainMenu.orig_OnBegin orig, OuiMainMenu self) {
+            if (CelesteNetClientModule.Settings.AutoConnect) {
+                Task.Delay(300).ContinueWith(t => {
+                    CelesteNetClientModule.Settings.Connected = true;
+                });
+            }
+
+            orig(self);
         }
 
         public override void LoadContent(bool firstLoad) {
@@ -78,6 +90,7 @@ namespace Celeste.Mod.CelesteNet.Client {
                 UIRenderTarget?.Dispose();
                 UIRenderTarget = VirtualContent.CreateRenderTarget("celestenet-hud-target", 1922, 1082, false, true, 0);
                 Logger.Log(LogLevel.DEV, "lifecycle", $"CelesteNetClientModule LoadContent created RT");
+
             });
         }
 

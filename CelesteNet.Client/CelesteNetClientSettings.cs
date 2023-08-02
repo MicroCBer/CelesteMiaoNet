@@ -84,6 +84,11 @@ namespace Celeste.Mod.CelesteNet.Client {
             set => Logger.Level = value;
         }
 
+        [SettingName("MODOPTIONS_CELESTENETCLIENT_AUTO_CONNECT")]
+        public bool AutoConnect { get; set; } = true;
+
+        [SettingName("MODOPTIONS_CELESTENETCLIENT_OPATICY_NEAR_SELF")]
+        public bool OpacityNearSelf { get; set; } = true;
 
         [SettingName("modoptions_celestenetclient_interactions")]
         [SettingSubText("modoptions_celestenetclient_interactionshint")]
