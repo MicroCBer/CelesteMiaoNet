@@ -1,4 +1,5 @@
-﻿using MC = Mono.Cecil;
+﻿using Celeste.Mod.CelesteNet.Client.Components;
+using MC = Mono.Cecil;
 using CIL = Mono.Cecil.Cil;
 
 using Celeste.Mod.CelesteNet.DataTypes;
@@ -39,7 +40,7 @@ namespace Celeste.Mod.CelesteNet.Client {
             => FontSize.Measure(text);
 
         public static Vector2 Measure(string text) {
-            if (IsFullAscii(text))
+            if (IfUseEnFont(text))
                 return FontSizeEN.Measure(text);
             else
                 return FontSize.Measure(text);
@@ -54,7 +55,9 @@ namespace Celeste.Mod.CelesteNet.Client {
       //  public static void Draw(char character, Vector2 position, Vector2 justify, Vector2 scale, Color color)
        //     => Font.Draw(BaseSize, character, position, justify, scale, color);
 
-       private static bool IsFullAscii(string text) {
+       private static bool IfUseEnFont(string text) {
+           if (!CelesteNetClientModule.Settings.UseENFontWhenPossible) return false;
+
            var enFlag = true;
            foreach (var c in text) {
                if (c > 256)
@@ -63,7 +66,7 @@ namespace Celeste.Mod.CelesteNet.Client {
            return enFlag;
         }
         private static void Draw(string text, Vector2 position, Vector2 justify, Vector2 scale, Color color, float edgeDepth, Color edgeColor, float stroke, Color strokeColor) {
-            if (IsFullAscii(text))
+            if (IfUseEnFont(text))
                 FontEN.Draw(BaseSizeEN, text, position, justify, scale, color, edgeDepth, edgeColor, stroke, strokeColor);
             else
                 Font.Draw(BaseSize, text, position, justify, scale, color, edgeDepth, edgeColor, stroke, strokeColor);
