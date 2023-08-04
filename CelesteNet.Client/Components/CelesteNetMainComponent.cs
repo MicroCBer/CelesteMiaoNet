@@ -77,6 +77,11 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         public bool ParseAndExecCommand(string msg) {
             if (msg.StartsWith("/")) {
                 if (msg.StartsWith("/watch")) {
+                    if (SaveData.Instance == null) {
+                        Context.Chat.AddLocalFakeMessage($"别在主界面 /watch，先进游戏");
+                        return true;
+                    }
+
                     SaveData.Instance.Assists.Invincible = false;
                     if (Player != null) {
                         Player.Sprite.Active = true;
