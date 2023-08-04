@@ -81,8 +81,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                         Context.Chat.AddLocalFakeMessage($"别在主界面 /watch，先进游戏");
                         return true;
                     }
-
-                    SaveData.Instance.Assists.Invincible = false;
+                    
                     if (Player != null) {
                         Player.Sprite.Active = true;
                         Player.Sprite.Visible = true;
@@ -112,8 +111,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
                         watchPlayerName = null;
                     }
-
-                    SaveData.Instance.Assists.Invincible = false;
+                    
                     return true;
                 }
             }
@@ -351,15 +349,13 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     RunOnMainThread(() => {
                         if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null) {
                             if (Player != null) {
-                                SaveData.Instance.Assists.Invincible = true;
-                                         PlayerBody.Visible = false;
-                                           PlayerBody.Collidable = false;
-                                         //  Player.DummyGravity = false;
-                                           Player.Hair.Sprite.Visible = false;
-                                           Player.Sprite.Visible = false;
-                                           Player.Position = frame.Position;
-                                           Player.Speed = frame.Speed;
-                                           Player.EnforceLevelBounds = true;
+                                PlayerBody.Visible = false;
+                                PlayerBody.Collidable = false;
+                                Player.Hair.Sprite.Visible = false;
+                                Player.Sprite.Visible = false;
+                                Player.Position = frame.Position;
+                                Player.Speed = frame.Speed;
+                                Player.EnforceLevelBounds = true;
                                 Player.ForceCameraUpdate = true;
                                 Player.StateMachine.State = Player.StFrozen;
 
