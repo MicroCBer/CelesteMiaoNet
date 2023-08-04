@@ -341,7 +341,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 ghost = null;
             }
 
-            if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null) {
+            if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null && Engine.Scene != null && !Engine.Scene.Paused) {
                 if (frame.Dead && session != null) {
                     session.StartedFromBeginning = false;
                     LevelEnter.Go(session, false);
