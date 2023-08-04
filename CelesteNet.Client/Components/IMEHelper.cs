@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.CelesteNet.Client.Components {
     using System;
     using System.Drawing;
+    using System.IO;
     using System.Runtime.InteropServices;
     using System.Windows.Forms;
     using static System.Net.Mime.MediaTypeNames;
@@ -17,11 +18,12 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
     public static class IMEHelper {
         static bool createdInput = false;
 
-        static bool isCore = isUsingCore();
-        static bool isFNA = isUsingFNA();
+        public static bool isCore = isUsingCore();
+        public static bool isFNA = isUsingFNA();
 
         public static bool isUsingFNA() {
-            return Type.GetType("Microsoft.Xna.Framework.FNALoggerEXT") != null;
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BuildIsFNA.txt");
+            return File.Exists(filePath);
         }
         public static bool isUsingCore() {
              
@@ -30,8 +32,14 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 .FrameworkName;
             return name.StartsWith(".NETCore");
         }
+
+        public static void InitLog() {
+            Logger.Log(LogLevel.WRN, "IMEHelper", $"::: InitInfo ::: - IsUsingCore: {isCore} - IsFNA: {isFNA}");
+        }
         public static bool fixIMEForCeleste() {
             if (isCore) return false;
+
+            
 
             if (!createdInput) {
                 createdInput = true;
@@ -48,6 +56,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         private static SetTextBoxFocus handler;
 
         public static SetTextBoxFocus getFocusHandler() {
+            if (isFNA) return b => { };
             if (handler == null) {
                 handler = CreateFormWithInputBoxForceFocus();
             }

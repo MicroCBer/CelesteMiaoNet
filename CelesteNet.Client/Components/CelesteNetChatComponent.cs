@@ -172,9 +172,9 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     _Time = 0;
                     TextInput.OnInput += OnTextInput;
 
-                    
+                    IMEHelper.InitLog();
 
-                    if (!IMEHelper.isUsingFNA()) {
+                    if (!IMEHelper.isFNA) {
                         IMEHelper.getFocusHandler()(true);
                     } else if (IMEHelper.fixIMEForCeleste()) {
                         AddLocalFakeMessage("Tips: 如果输入不了请点一下鼠标");
@@ -392,9 +392,12 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             if (c == (char) 13) {
                 // Enter - send.
                 // Handled in Update.
-                if(!IMEHelper.isUsingFNA())
+                if(!IMEHelper.isFNA)
                     IMEHelper.getFocusHandler()(false);
             } else if (c == (char) 8 && _CursorIndex > 0) {
+                if (!IMEHelper.isFNA)
+                    IMEHelper.getFocusHandler()(true);
+
                 // Backspace - trim.
                 if (Typing.Length > 0) {
                     int trim = 1;
@@ -421,7 +424,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 _Time = 0;
 
             } else if (!char.IsControl(c)) {
-                if (!IMEHelper.isUsingFNA())
+                if (!IMEHelper.isFNA)
                     IMEHelper.getFocusHandler()(true);
 
                 if (CursorIndex == Typing.Length) {
