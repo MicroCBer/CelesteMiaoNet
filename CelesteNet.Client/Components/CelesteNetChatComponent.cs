@@ -172,10 +172,13 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     _Time = 0;
                     TextInput.OnInput += OnTextInput;
 
-                    if (IMEHelper.fixIMEForCeleste()) {
+                    
+
+                    if (!IMEHelper.isUsingFNA()) {
+                        IMEHelper.getFocusHandler()(true);
+                    } else if (IMEHelper.fixIMEForCeleste()) {
                         AddLocalFakeMessage("Tips: 如果输入不了请点一下鼠标");
                     }
-                    
                 } else {
                     Typing = "";
                     CursorIndex = 0;
@@ -371,15 +374,26 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
         }
 
+        private char lastTextChar;
+        private DateTime lastCharTime;
 
         public void OnTextInput(char c) {
+            // prevent double typing of the same character
+            if (c == lastTextChar && (DateTime.Now - lastCharTime).TotalMilliseconds < 15 && /*is ascii*/ c < 256)
+                return;
+
+            lastCharTime = DateTime.Now;
+
+            lastTextChar = c;
+
             if (!Active)
                 return;
 
             if (c == (char) 13) {
                 // Enter - send.
                 // Handled in Update.
-
+                if(!IMEHelper.isUsingFNA())
+                    IMEHelper.getFocusHandler()(false);
             } else if (c == (char) 8 && _CursorIndex > 0) {
                 // Backspace - trim.
                 if (Typing.Length > 0) {
@@ -407,6 +421,9 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 _Time = 0;
 
             } else if (!char.IsControl(c)) {
+                if (!IMEHelper.isUsingFNA())
+                    IMEHelper.getFocusHandler()(true);
+
                 if (CursorIndex == Typing.Length) {
                     // Any other character - append.
                     Typing += c;

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.CelesteNet.Client.Components {
     using System;
     using System.Drawing;
+    using System.Runtime.InteropServices;
     using System.Windows.Forms;
     using static System.Net.Mime.MediaTypeNames;
 
@@ -17,7 +18,13 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         static bool createdInput = false;
 
         static bool isCore = isUsingCore();
+        static bool isFNA = isUsingFNA();
+
+        public static bool isUsingFNA() {
+            return Type.GetType("Microsoft.Xna.Framework.FNALoggerEXT") != null;
+        }
         public static bool isUsingCore() {
+             
             var name = Assembly.GetEntryAssembly()?
                 .GetCustomAttribute<TargetFrameworkAttribute>()?
                 .FrameworkName;
@@ -35,6 +42,69 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
             return false;
         }
+
+        public delegate void SetTextBoxFocus(bool focused);
+
+        private static SetTextBoxFocus handler;
+
+        public static SetTextBoxFocus getFocusHandler() {
+            if (handler == null) {
+                handler = CreateFormWithInputBoxForceFocus();
+            }
+            return handler;
+        }
+
+        static SetTextBoxFocus CreateFormWithInputBoxForceFocus() {
+            string result = String.Empty;
+
+            IntPtr celesteHandle = NativeMethods.FindWindow(null, "Celeste");
+            if (celesteHandle == IntPtr.Zero) {
+                return null;
+            }
+
+            Form invisibleForm = new Form() {
+                Width = 0,
+                Height = 0,
+                ShowInTaskbar = false,
+                StartPosition = FormStartPosition.CenterScreen,
+                FormBorderStyle = FormBorderStyle.None,
+                Opacity = 1
+            };
+
+            TextBox textBox = new TextBox() {
+                Location = new Point(0, 0),
+                Size = new Size(0, 0),
+                TabStop = false
+            };
+            invisibleForm.Controls.Add(textBox);
+
+            invisibleForm.Shown += (sender, e) => {
+                invisibleForm.Opacity = 1;
+                textBox.Size = new Size(0, 0);
+                textBox.Multiline = true;
+            };
+
+            NativeMethods.SetParent(invisibleForm.Handle, celesteHandle);
+            NativeMethods.SetWindowPos(invisibleForm.Handle, IntPtr.Zero, -100, -100, 0, 0, SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
+
+
+            Task.Run(() => {
+                Task.Delay(100).ContinueWith((t) => {
+                    // NativeMethods.SetFocus(celesteHandle);
+                });
+                System.Windows.Forms.Application.Run(invisibleForm);
+            });
+
+            return (focused) => {
+                if (focused) {
+                    textBox.Focus();
+                    textBox.Text = "";
+                } else {
+                    NativeMethods.SetFocus(celesteHandle);
+                }
+            };
+        }
+
 
         static void CreateInvisibleFormWithInputBox() {
             string result = String.Empty;
@@ -63,7 +133,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
             invisibleForm.Shown += (sender, e) => {
                 invisibleForm.Opacity = 0;
                 textBox.Size = new Size(0, 0);
-              //  textBox.Focus();
+                textBox.Focus();
             };
 
             NativeMethods.SetParent(invisibleForm.Handle, celesteHandle);
