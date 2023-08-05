@@ -84,8 +84,6 @@ namespace Celeste.Mod.CelesteNet.Server.Chat {
                 msg.ID = NextID++;
             msg.Date = DateTime.UtcNow;
 
-            msg.Text = CheckSentense(msg.Text);
-
             if (!msg.CreatedByServer) {
                 if (from == null)
                     return null;
@@ -101,7 +99,13 @@ namespace Celeste.Mod.CelesteNet.Server.Chat {
                 if (msg.Text.IsNullOrEmpty())
                     return null;
 
+                if (!msg.CreatedByServer)
+                    Logger.Log(LogLevel.INF, "chatmsg-before-check", msg.ToString(false, true));
+
                 msg.Text.Replace("\r", "").Replace("\n", "");
+
+                msg.Text = CheckSentense(msg.Text);
+
                 if (msg.Text.Length > Settings.MaxChatTextLength)
                     msg.Text = msg.Text.Substring(0, Settings.MaxChatTextLength);
 
@@ -184,7 +188,8 @@ namespace Celeste.Mod.CelesteNet.Server.Chat {
             }
 
             if (msg.Player != null && Server.PlayersByID.TryGetValue(msg.Player.ID, out CelesteNetPlayerSession? session) &&
-                Server.UserData.Load<UserChatSettings>(session.UID).AutoChannelChat) {
+                Server.UserData.Load<UserChatSettings>(session.UID).AutoChannelChat && session.Name != "main") {
+
                 msg.Target = msg.Player;
                 Commands.Get<ChatCMDChannelChat>().ParseAndRun(new ChatCMDEnv(this, msg));
                 return;
