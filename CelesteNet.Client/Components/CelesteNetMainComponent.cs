@@ -77,7 +77,11 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
         public bool ParseAndExecCommand(string msg) {
             if (msg.StartsWith("/")) {
                 if (msg.StartsWith("/watch")) {
-                    SaveData.Instance.Assists.Invincible = false;
+                    if (SaveData.Instance == null) {
+                        Context.Chat.AddLocalFakeMessage($"别在主界面 /watch，先进游戏");
+                        return true;
+                    }
+                    
                     if (Player != null) {
                         Player.Sprite.Active = true;
                         Player.Sprite.Visible = true;
@@ -107,8 +111,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
 
                         watchPlayerName = null;
                     }
-
-                    SaveData.Instance.Assists.Invincible = false;
+                    
                     return true;
                 }
             }
@@ -336,7 +339,7 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                 ghost = null;
             }
 
-            if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null) {
+            if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null && Engine.Scene != null && !Engine.Scene.Paused) {
                 if (frame.Dead && session != null) {
                     session.StartedFromBeginning = false;
                     LevelEnter.Go(session, false);
@@ -346,15 +349,13 @@ namespace Celeste.Mod.CelesteNet.Client.Components {
                     RunOnMainThread(() => {
                         if (watchPlayerName != null && frame.Player.Name == watchPlayerName && ghost != null) {
                             if (Player != null) {
-                                SaveData.Instance.Assists.Invincible = true;
-                                         PlayerBody.Visible = false;
-                                           PlayerBody.Collidable = false;
-                                         //  Player.DummyGravity = false;
-                                           Player.Hair.Sprite.Visible = false;
-                                           Player.Sprite.Visible = false;
-                                           Player.Position = frame.Position;
-                                           Player.Speed = frame.Speed;
-                                           Player.EnforceLevelBounds = true;
+                                PlayerBody.Visible = false;
+                                PlayerBody.Collidable = false;
+                                Player.Hair.Sprite.Visible = false;
+                                Player.Sprite.Visible = false;
+                                Player.Position = frame.Position;
+                                Player.Speed = frame.Speed;
+                                Player.EnforceLevelBounds = true;
                                 Player.ForceCameraUpdate = true;
                                 Player.StateMachine.State = Player.StFrozen;
 

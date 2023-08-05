@@ -20,6 +20,8 @@ namespace Celeste.Mod.CelesteNet.Server.Chat {
         public readonly RingBuffer<DataChat?> ChatBuffer = new(3000);
         public uint NextID = (uint) (DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond);
 
+        private SensitiveWordsChecker.CheckSentence CheckSentense = SensitiveWordsChecker.InitChecker();
+
 #pragma warning disable CS8618 // Set on init.
         public SpamContext BroadcastSpamContext;
         public ChatCommands Commands;
@@ -81,6 +83,8 @@ namespace Celeste.Mod.CelesteNet.Server.Chat {
             lock (ChatLog)
                 msg.ID = NextID++;
             msg.Date = DateTime.UtcNow;
+
+            msg.Text = CheckSentense(msg.Text);
 
             if (!msg.CreatedByServer) {
                 if (from == null)
