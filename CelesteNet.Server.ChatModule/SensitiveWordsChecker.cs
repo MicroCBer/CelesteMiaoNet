@@ -39,7 +39,7 @@ namespace Celeste.Mod.CelesteNet.Server.Chat {
 
         static string HideForbiddenWords(string original, string[] sensitiveWords) {
             foreach (string word in sensitiveWords) {
-                original = original.Replace(word, "●".PadRight(word.Length, '●'));
+                original = original.Replace(word, "*".PadRight(word.Length, '*'));
             }
 
             return original;
