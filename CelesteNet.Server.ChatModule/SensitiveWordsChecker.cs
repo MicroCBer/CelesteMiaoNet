@@ -15,8 +15,11 @@ namespace Celeste.Mod.CelesteNet.Server.Chat {
         public delegate string CheckSentence(string sentence);
         public static CheckSentence InitChecker() {
             if (!File.Exists(LocalFilePath)) {
+                Console.WriteLine("本地无词库，正在从 GitHub 下载敏感词库");
                 DownloadFile(RemoteFileUrl, LocalFilePath);
             }
+
+            Console.WriteLine("正在加载敏感词库");
 
             string[] sensitiveWords = LoadSensitiveWords(LocalFilePath);
 
